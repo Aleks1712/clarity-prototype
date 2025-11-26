@@ -7,7 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Baby, Users, Clock, CheckCircle2, LogOut } from 'lucide-react';
+import { Baby, Users, Clock, CheckCircle2, LogOut, Bell, BellOff } from 'lucide-react';
+import { usePickupNotifications } from '@/hooks/usePickupNotifications';
 
 interface Child {
   id: string;
@@ -28,6 +29,16 @@ export default function ParentDashboard() {
   const [authorizedPickups, setAuthorizedPickups] = useState<AuthorizedPickup[]>([]);
   const [selectedPickup, setSelectedPickup] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(
+    typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted'
+  );
+
+  const { requestNotificationPermission } = usePickupNotifications();
+
+  const handleEnableNotifications = async () => {
+    const granted = await requestNotificationPermission();
+    setNotificationsEnabled(granted);
+  };
 
   useEffect(() => {
     if (user) {
@@ -158,9 +169,31 @@ export default function ParentDashboard() {
               <p className="text-sm text-muted-foreground">Forelder</p>
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={signOut}>
-            <LogOut className="w-5 h-5" />
-          </Button>
+          <div className="flex items-center gap-2">
+            {!notificationsEnabled && (
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleEnableNotifications}
+                title="Aktiver varsler"
+              >
+                <BellOff className="w-5 h-5" />
+              </Button>
+            )}
+            {notificationsEnabled && (
+              <Button
+                variant="outline"
+                size="icon"
+                className="bg-success/10 border-success/20"
+                title="Varsler aktivert"
+              >
+                <Bell className="w-5 h-5 text-success" />
+              </Button>
+            )}
+            <Button variant="ghost" size="icon" onClick={signOut}>
+              <LogOut className="w-5 h-5" />
+            </Button>
+          </div>
         </div>
       </div>
 

@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Baby, Clock, CheckCircle2, XCircle, LogOut, Bell } from 'lucide-react';
+import { Baby, Clock, CheckCircle2, XCircle, LogOut, Bell, BellOff } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { usePickupNotifications } from '@/hooks/usePickupNotifications';
 
 interface PickupRequest {
   id: string;
@@ -29,6 +30,16 @@ export default function EmployeeDashboard() {
   const [pendingPickups, setPendingPickups] = useState<PickupRequest[]>([]);
   const [approvedPickups, setApprovedPickups] = useState<PickupRequest[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(
+    typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted'
+  );
+  
+  const { requestNotificationPermission } = usePickupNotifications();
+
+  const handleEnableNotifications = async () => {
+    const granted = await requestNotificationPermission();
+    setNotificationsEnabled(granted);
+  };
 
   useEffect(() => {
     fetchPickups();
@@ -136,9 +147,31 @@ export default function EmployeeDashboard() {
               <p className="text-sm text-muted-foreground">Ansatt</p>
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={signOut}>
-            <LogOut className="w-5 h-5" />
-          </Button>
+          <div className="flex items-center gap-2">
+            {!notificationsEnabled && (
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleEnableNotifications}
+                title="Aktiver varsler"
+              >
+                <BellOff className="w-5 h-5" />
+              </Button>
+            )}
+            {notificationsEnabled && (
+              <Button
+                variant="outline"
+                size="icon"
+                className="bg-success/10 border-success/20"
+                title="Varsler aktivert"
+              >
+                <Bell className="w-5 h-5 text-success" />
+              </Button>
+            )}
+            <Button variant="ghost" size="icon" onClick={signOut}>
+              <LogOut className="w-5 h-5" />
+            </Button>
+          </div>
         </div>
       </div>
 
