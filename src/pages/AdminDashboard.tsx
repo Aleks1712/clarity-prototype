@@ -47,17 +47,106 @@ export default function AdminDashboard() {
 
     const formData = new FormData(e.currentTarget);
     const name = formData.get('childName') as string;
+    const parentEmail = formData.get('parentEmail') as string;
 
-    const { error } = await supabase
-      .from('children')
-      .insert({ name });
+    try {
+      // Insert child
+      const { data: child, error: childError } = await supabase
+        .from('children')
+        .insert({ name })
+        .select()
+        .single();
 
-    if (error) {
-      toast.error('Kunne ikke legge til barn');
-    } else {
+      if (childError) throw childError;
+
+      // Find parent by email
+      if (parentEmail) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id')
+          .ilike('full_name', `%${parentEmail}%`)
+          .single();
+
+        if (profile && child) {
+          await supabase
+            .from('parent_children')
+            .insert({
+              parent_id: profile.id,
+              child_id: child.id,
+              relationship: 'Forelder',
+            });
+        }
+      }
+
       toast.success('Barn lagt til!');
       fetchData();
       e.currentTarget.reset();
+    } catch (error: any) {
+      toast.error('Kunne ikke legge til barn: ' + error.message);
+    }
+
+    setIsLoading(false);
+  };
+
+  const setupDemoData = async () => {
+    setIsLoading(true);
+
+    try {
+      // Get first user (could be current user or any user)
+      const { data: firstUser } = await supabase
+        .from('profiles')
+        .select('id')
+        .limit(1)
+        .single();
+
+      if (!firstUser) throw new Error('Ingen brukere funnet');
+
+      // Insert demo children
+      const { data: children, error: childrenError } = await supabase
+        .from('children')
+        .insert([
+          { name: 'Emma Hansen', birth_date: '2019-03-15' },
+          { name: 'Lucas Olsen', birth_date: '2020-07-22' },
+          { name: 'Sofia Berg', birth_date: '2018-11-08' },
+        ])
+        .select();
+
+      if (childrenError) throw childrenError;
+
+      // Link first child to first user
+      if (children && children.length > 0) {
+        await supabase
+          .from('parent_children')
+          .insert({
+            parent_id: firstUser.id,
+            child_id: children[0].id,
+            relationship: 'Forelder',
+            is_primary: true,
+          });
+
+        // Add authorized pickups
+        await supabase
+          .from('authorized_pickups')
+          .insert([
+            {
+              child_id: children[0].id,
+              name: 'Mormor Anne',
+              relationship: 'Besteforelder',
+              phone: '987 65 432',
+            },
+            {
+              child_id: children[0].id,
+              name: 'Tante Lisa',
+              relationship: 'Tante',
+              phone: '456 78 901',
+            },
+          ]);
+      }
+
+      toast.success('Demodata opprettet!');
+      fetchData();
+    } catch (error: any) {
+      toast.error('Kunne ikke opprette demodata: ' + error.message);
     }
 
     setIsLoading(false);
@@ -158,6 +247,29 @@ export default function AdminDashboard() {
           </TabsContent>
 
           <TabsContent value="children" className="space-y-4">
+            {/* Quick Demo Setup */}
+            <Card className="border-primary/50 bg-primary/5">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Plus className="w-5 h-5" />
+                  Hurtigoppsett (Demo)
+                </CardTitle>
+                <CardDescription>
+                  Opprett testdata med ett klikk for å teste systemet
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button
+                  onClick={setupDemoData}
+                  disabled={isLoading}
+                  size="lg"
+                  className="w-full"
+                >
+                  Opprett demodata (3 barn + koblinger)
+                </Button>
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader>
                 <CardTitle>Legg til nytt barn</CardTitle>
@@ -175,6 +287,17 @@ export default function AdminDashboard() {
                       placeholder="F.eks. Emma Hansen"
                       required
                     />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="parentEmail">Forelder (valgfritt)</Label>
+                    <Input
+                      id="parentEmail"
+                      name="parentEmail"
+                      placeholder="Søk etter forelder..."
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Skriv inn navn på forelder for å koble barnet
+                    </p>
                   </div>
                   <Button type="submit" disabled={isLoading}>
                     <Plus className="w-4 h-4 mr-2" />

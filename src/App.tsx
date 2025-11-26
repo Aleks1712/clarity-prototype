@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import Auth from "./pages/Auth";
+import Onboarding from "./pages/Onboarding";
 import ParentDashboard from "./pages/ParentDashboard";
 import EmployeeDashboard from "./pages/EmployeeDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -51,16 +52,8 @@ function DashboardRouter() {
   if (userRole === 'employee') return <EmployeeDashboard />;
   if (userRole === 'admin') return <AdminDashboard />;
 
-  return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="text-center">
-        <h2 className="text-2xl font-bold mb-2">Ingen rolle tildelt</h2>
-        <p className="text-muted-foreground">
-          Kontakt administrator for å få tildelt en rolle.
-        </p>
-      </div>
-    </div>
-  );
+  // If no role, show onboarding
+  return <Onboarding />;
 }
 
 const App = () => (

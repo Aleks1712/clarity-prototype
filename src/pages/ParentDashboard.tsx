@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -30,7 +30,9 @@ export default function ParentDashboard() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    fetchChildren();
+    if (user) {
+      fetchChildren();
+    }
   }, [user]);
 
   useEffect(() => {
@@ -116,6 +118,31 @@ export default function ParentDashboard() {
   };
 
   const currentChild = children.find(c => c.id === selectedChild);
+
+  // Show setup prompt if no children
+  if (children.length === 0) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <CardTitle>Ingen barn registrert</CardTitle>
+            <CardDescription>
+              Du har ikke barn tilknyttet kontoen din ennå.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              I en fullstendig versjon ville administrator registrert barn og koblet dem til foreldre.
+              For demo kan du be administrator om å legge til demodata.
+            </p>
+            <Button onClick={signOut} variant="outline" className="w-full">
+              Logg ut
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5">
