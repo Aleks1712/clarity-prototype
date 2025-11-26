@@ -204,55 +204,55 @@ export default function EmployeeDashboard() {
               </Card>
             ) : (
               pendingPickups.map((pickup) => (
-                <Card key={pickup.id} className="border-l-4 border-l-warning">
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-4">
-                        <Avatar className="w-16 h-16">
-                          <AvatarImage src={pickup.child.photo_url || undefined} />
-                          <AvatarFallback className="text-lg">
-                            {pickup.child.name[0]}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <CardTitle className="text-xl mb-1">{pickup.child.name}</CardTitle>
-                          <p className="text-sm text-muted-foreground">
-                            Hentes av: <span className="font-semibold text-foreground">{pickup.pickup_person_name}</span>
+                <Card key={pickup.id} className="border-l-8 border-l-warning shadow-lg">
+                  <CardContent className="pt-6 space-y-6">
+                    {/* Child Info - LARGE */}
+                    <div className="flex items-center gap-6">
+                      <Avatar className="w-24 h-24 ring-4 ring-warning/20">
+                        <AvatarImage src={pickup.child.photo_url || undefined} />
+                        <AvatarFallback className="text-3xl">
+                          {pickup.child.name[0]}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <h3 className="font-bold text-2xl mb-2">{pickup.child.name}</h3>
+                        <div className="space-y-1">
+                          <p className="text-base">
+                            <span className="text-muted-foreground">Hentes av:</span>{' '}
+                            <span className="font-bold">{pickup.pickup_person_name}</span>
                           </p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Meldt av: {pickup.parent.full_name}
+                          <p className="text-sm text-muted-foreground">
+                            Meldt: {new Date(pickup.requested_at).toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' })}
                           </p>
                         </div>
                       </div>
-                      <Badge variant="outline" className="bg-warning/10 text-warning border-warning/20">
-                        <Clock className="w-3 h-3 mr-1" />
-                        Venter
+                      <Badge className="bg-warning text-warning-foreground px-4 py-2 text-base">
+                        <Clock className="w-4 h-4 mr-2" />
+                        NY
                       </Badge>
                     </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex gap-2">
+
+                    {/* Action Buttons - EXTRA LARGE */}
+                    <div className="flex gap-3">
                       <Button
                         onClick={() => handleApprove(pickup.id)}
                         disabled={isLoading}
-                        className="flex-1"
+                        className="flex-1 h-16 text-lg font-bold bg-success hover:bg-success/90"
                         size="lg"
                       >
-                        <CheckCircle2 className="w-4 h-4 mr-2" />
-                        Godkjenn henting
+                        <CheckCircle2 className="w-6 h-6 mr-2" />
+                        Godkjenn
                       </Button>
                       <Button
                         onClick={() => handleReject(pickup.id)}
                         disabled={isLoading}
                         variant="outline"
+                        className="h-16 px-6 border-2 border-destructive/20 hover:bg-destructive/10"
                         size="lg"
                       >
-                        <XCircle className="w-4 h-4" />
+                        <XCircle className="w-6 h-6 text-destructive" />
                       </Button>
                     </div>
-                    <p className="text-xs text-center text-muted-foreground mt-3">
-                      Meldt {new Date(pickup.requested_at).toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' })}
-                    </p>
                   </CardContent>
                 </Card>
               ))

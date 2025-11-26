@@ -39,7 +39,9 @@ All colors MUST be HSL.
     --radius: 0.75rem;
 
     --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
     --warning: 43 96% 56%;
+    --warning-foreground: 215 25% 27%;
     --info: 201 96% 32%;
   }
 
@@ -73,7 +75,9 @@ All colors MUST be HSL.
     --ring: 201 96% 32%;
 
     --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
     --warning: 43 96% 56%;
+    --warning-foreground: 215 25% 27%;
     --info: 201 96% 32%;
   }
 }

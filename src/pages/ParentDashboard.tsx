@@ -198,63 +198,64 @@ export default function ParentDashboard() {
       </div>
 
       <div className="container max-w-2xl mx-auto px-4 py-6 space-y-4">
-        {/* Children Selector */}
+        {/* Children Selector - LARGE AND SIMPLE */}
         {children.length > 1 && (
-          <div className="flex gap-2 overflow-x-auto pb-2">
+          <div className="flex gap-3 overflow-x-auto pb-2">
             {children.map((child) => (
               <button
                 key={child.id}
                 onClick={() => setSelectedChild(child.id)}
-                className={`flex flex-col items-center gap-2 p-3 rounded-lg transition-colors ${
+                className={`flex flex-col items-center gap-3 p-4 rounded-2xl transition-all min-w-[120px] ${
                   selectedChild === child.id
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-card hover:bg-accent'
+                    ? 'bg-primary text-primary-foreground shadow-lg scale-105'
+                    : 'bg-card hover:bg-accent border-2 border-transparent hover:border-primary/20'
                 }`}
               >
-                <Avatar className="w-12 h-12">
+                <Avatar className="w-20 h-20 ring-4 ring-background">
                   <AvatarImage src={child.photo_url || undefined} />
-                  <AvatarFallback>{child.name[0]}</AvatarFallback>
+                  <AvatarFallback className="text-2xl">{child.name[0]}</AvatarFallback>
                 </Avatar>
-                <span className="text-sm font-medium whitespace-nowrap">{child.name}</span>
+                <span className="text-base font-bold whitespace-nowrap">{child.name}</span>
               </button>
             ))}
           </div>
         )}
 
-        {/* Pickup Request Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="w-5 h-5" />
-              Meld henting
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
+        {/* Pickup Request Card - SIMPLIFIED 3-CLICK FLOW */}
+        <Card className="border-2">
+          <CardContent className="pt-6 space-y-6">
+            {/* Current Child - LARGE */}
             {currentChild && (
-              <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
-                <Avatar className="w-16 h-16">
+              <div className="flex flex-col items-center gap-4 p-6 bg-primary/5 rounded-2xl">
+                <Avatar className="w-24 h-24 ring-4 ring-primary/20">
                   <AvatarImage src={currentChild.photo_url || undefined} />
-                  <AvatarFallback className="text-lg">{currentChild.name[0]}</AvatarFallback>
+                  <AvatarFallback className="text-3xl">{currentChild.name[0]}</AvatarFallback>
                 </Avatar>
-                <div>
-                  <h3 className="font-semibold text-lg">{currentChild.name}</h3>
-                  <p className="text-sm text-muted-foreground">Skal hentes av:</p>
-                </div>
+                <h2 className="font-bold text-2xl">{currentChild.name}</h2>
+                <Badge variant="outline" className="text-base px-4 py-1">
+                  I barnehagen
+                </Badge>
               </div>
             )}
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Hvem henter?</label>
+            {/* Who Picks Up - LARGE BUTTONS */}
+            <div className="space-y-3">
+              <label className="text-lg font-bold">Hvem henter?</label>
               <Select value={selectedPickup} onValueChange={setSelectedPickup}>
-                <SelectTrigger className="w-full h-12">
-                  <SelectValue placeholder="Velg person som henter" />
+                <SelectTrigger className="w-full h-16 text-lg border-2">
+                  <SelectValue placeholder="Velg person" />
                 </SelectTrigger>
                 <SelectContent>
                   {authorizedPickups.map((pickup) => (
-                    <SelectItem key={pickup.id} value={pickup.id}>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{pickup.name}</span>
-                        <span className="text-sm text-muted-foreground">({pickup.relationship})</span>
+                    <SelectItem key={pickup.id} value={pickup.id} className="h-14 text-base">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                          <Users className="w-5 h-5" />
+                        </div>
+                        <div className="text-left">
+                          <div className="font-bold">{pickup.name}</div>
+                          <div className="text-sm text-muted-foreground">{pickup.relationship}</div>
+                        </div>
                       </div>
                     </SelectItem>
                   ))}
@@ -262,46 +263,53 @@ export default function ParentDashboard() {
               </Select>
             </div>
 
+            {/* MAIN ACTION BUTTON - EXTRA LARGE */}
             <Button
               onClick={handleRequestPickup}
               disabled={!selectedPickup || isSubmitting}
-              className="w-full h-12 text-base"
+              className="w-full h-20 text-xl font-bold rounded-2xl"
               size="lg"
             >
               {isSubmitting ? (
                 <>
-                  <Clock className="w-5 h-5 mr-2 animate-spin" />
+                  <Clock className="w-7 h-7 mr-3 animate-spin" />
                   Sender...
                 </>
               ) : (
                 <>
-                  <CheckCircle2 className="w-5 h-5 mr-2" />
-                  Send hentingsvarsel
+                  <CheckCircle2 className="w-7 h-7 mr-3" />
+                  Hente barn
                 </>
               )}
             </Button>
 
-            <p className="text-xs text-center text-muted-foreground">
-              Personalet vil motta varsel og godkjenne hentingen før barnet utleveres
+            <p className="text-sm text-center text-muted-foreground">
+              Personalet godkjenner før utlevering
             </p>
           </CardContent>
         </Card>
 
-        {/* Info Card */}
-        <Card className="bg-info/5 border-info/20">
+        {/* Info Card - SIMPLE 3-STEP */}
+        <Card className="bg-success/5 border-success/20">
           <CardContent className="pt-6">
-            <div className="flex gap-3">
-              <div className="w-10 h-10 rounded-full bg-info/10 flex items-center justify-center flex-shrink-0">
-                <CheckCircle2 className="w-5 h-5 text-info" />
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div>
+                <div className="w-12 h-12 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-2">
+                  <span className="text-2xl font-bold text-success">1</span>
+                </div>
+                <p className="text-sm font-medium">Velg</p>
               </div>
-              <div className="space-y-1">
-                <h4 className="font-semibold text-sm">Slik fungerer det</h4>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>1. Velg hvem som skal hente</li>
-                  <li>2. Send varsel til barnehagen</li>
-                  <li>3. Personalet godkjenner henting</li>
-                  <li>4. Barnet er klart til utlevering</li>
-                </ul>
+              <div>
+                <div className="w-12 h-12 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-2">
+                  <span className="text-2xl font-bold text-success">2</span>
+                </div>
+                <p className="text-sm font-medium">Send</p>
+              </div>
+              <div>
+                <div className="w-12 h-12 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-2">
+                  <span className="text-2xl font-bold text-success">3</span>
+                </div>
+                <p className="text-sm font-medium">Hent</p>
               </div>
             </div>
           </CardContent>
