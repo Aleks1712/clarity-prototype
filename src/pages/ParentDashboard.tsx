@@ -157,15 +157,15 @@ export default function ParentDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5">
-      {/* Header */}
-      <div className="bg-card border-b shadow-sm">
+      {/* Header with gradient */}
+      <div className="bg-gradient-to-r from-card via-card to-card/95 border-b shadow-soft backdrop-blur-sm">
         <div className="container max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-              <Baby className="w-6 h-6 text-primary" />
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-glow-primary">
+              <Baby className="w-7 h-7 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-lg font-bold">Krysselista</h1>
+              <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">Krysselista</h1>
               <p className="text-sm text-muted-foreground">Forelder</p>
             </div>
           </div>
@@ -176,6 +176,7 @@ export default function ParentDashboard() {
                 size="icon"
                 onClick={handleEnableNotifications}
                 title="Aktiver varsler"
+                className="hover:scale-105 transition-transform"
               >
                 <BellOff className="w-5 h-5" />
               </Button>
@@ -184,13 +185,13 @@ export default function ParentDashboard() {
               <Button
                 variant="outline"
                 size="icon"
-                className="bg-success/10 border-success/20"
+                className="bg-success/10 border-success/20 hover:bg-success/20 hover:scale-105 transition-all"
                 title="Varsler aktivert"
               >
                 <Bell className="w-5 h-5 text-success" />
               </Button>
             )}
-            <Button variant="ghost" size="icon" onClick={signOut}>
+            <Button variant="ghost" size="icon" onClick={signOut} className="hover:scale-105 transition-transform">
               <LogOut className="w-5 h-5" />
             </Button>
           </div>
@@ -198,20 +199,20 @@ export default function ParentDashboard() {
       </div>
 
       <div className="container max-w-2xl mx-auto px-4 py-6 space-y-4">
-        {/* Children Selector - LARGE AND SIMPLE */}
+        {/* Children Selector - LARGE AND BEAUTIFUL */}
         {children.length > 1 && (
           <div className="flex gap-3 overflow-x-auto pb-2">
             {children.map((child) => (
               <button
                 key={child.id}
                 onClick={() => setSelectedChild(child.id)}
-                className={`flex flex-col items-center gap-3 p-4 rounded-2xl transition-all min-w-[120px] ${
+                className={`flex flex-col items-center gap-3 p-4 rounded-2xl transition-all min-w-[120px] hover:scale-105 ${
                   selectedChild === child.id
-                    ? 'bg-primary text-primary-foreground shadow-lg scale-105'
-                    : 'bg-card hover:bg-accent border-2 border-transparent hover:border-primary/20'
+                    ? 'bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-glow-primary scale-105'
+                    : 'bg-card hover:bg-accent border-2 border-transparent hover:border-primary/20 shadow-soft'
                 }`}
               >
-                <Avatar className="w-20 h-20 ring-4 ring-background">
+                <Avatar className="w-20 h-20 ring-4 ring-background shadow-lg">
                   <AvatarImage src={child.photo_url || undefined} />
                   <AvatarFallback className="text-2xl">{child.name[0]}</AvatarFallback>
                 </Avatar>
@@ -221,18 +222,25 @@ export default function ParentDashboard() {
           </div>
         )}
 
-        {/* Pickup Request Card - SIMPLIFIED 3-CLICK FLOW */}
-        <Card className="border-2">
+        {/* Pickup Request Card - POLISHED DESIGN */}
+        <Card className="border-2 shadow-lg hover:shadow-xl transition-shadow">
           <CardContent className="pt-6 space-y-6">
-            {/* Current Child - LARGE */}
+            {/* Current Child - LARGE & BEAUTIFUL */}
             {currentChild && (
-              <div className="flex flex-col items-center gap-4 p-6 bg-primary/5 rounded-2xl">
-                <Avatar className="w-24 h-24 ring-4 ring-primary/20">
-                  <AvatarImage src={currentChild.photo_url || undefined} />
-                  <AvatarFallback className="text-3xl">{currentChild.name[0]}</AvatarFallback>
-                </Avatar>
-                <h2 className="font-bold text-2xl">{currentChild.name}</h2>
-                <Badge variant="outline" className="text-base px-4 py-1">
+              <div className="flex flex-col items-center gap-4 p-6 bg-gradient-to-br from-primary/5 via-primary/3 to-transparent rounded-3xl border border-primary/10">
+                <div className="relative">
+                  <Avatar className="w-28 h-28 ring-4 ring-primary/20 shadow-glow-primary">
+                    <AvatarImage src={currentChild.photo_url || undefined} />
+                    <AvatarFallback className="text-4xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
+                      {currentChild.name[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-success rounded-full flex items-center justify-center shadow-glow-success border-4 border-background">
+                    <CheckCircle2 className="w-5 h-5 text-white" />
+                  </div>
+                </div>
+                <h2 className="font-bold text-3xl">{currentChild.name}</h2>
+                <Badge variant="outline" className="text-base px-4 py-1.5 bg-success/10 border-success/20 text-success font-semibold">
                   I barnehagen
                 </Badge>
               </div>
@@ -263,11 +271,11 @@ export default function ParentDashboard() {
               </Select>
             </div>
 
-            {/* MAIN ACTION BUTTON - EXTRA LARGE */}
+            {/* MAIN ACTION BUTTON - EXTRA LARGE & BEAUTIFUL */}
             <Button
               onClick={handleRequestPickup}
               disabled={!selectedPickup || isSubmitting}
-              className="w-full h-20 text-xl font-bold rounded-2xl"
+              className="w-full h-20 text-xl font-bold rounded-2xl shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all bg-gradient-to-r from-primary to-primary/90"
               size="lg"
             >
               {isSubmitting ? (

@@ -135,15 +135,15 @@ export default function EmployeeDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5">
-      {/* Header */}
-      <div className="bg-card border-b shadow-sm">
+      {/* Header with gradient */}
+      <div className="bg-gradient-to-r from-card via-card to-card/95 border-b shadow-soft backdrop-blur-sm">
         <div className="container max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center">
-              <Baby className="w-6 h-6 text-secondary" />
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-secondary to-secondary/80 flex items-center justify-center shadow-glow-success">
+              <Baby className="w-7 h-7 text-secondary-foreground" />
             </div>
             <div>
-              <h1 className="text-lg font-bold">Krysselista</h1>
+              <h1 className="text-xl font-bold bg-gradient-to-r from-secondary to-secondary/80 bg-clip-text text-transparent">Krysselista</h1>
               <p className="text-sm text-muted-foreground">Ansatt</p>
             </div>
           </div>
@@ -154,6 +154,7 @@ export default function EmployeeDashboard() {
                 size="icon"
                 onClick={handleEnableNotifications}
                 title="Aktiver varsler"
+                className="hover:scale-105 transition-transform"
               >
                 <BellOff className="w-5 h-5" />
               </Button>
@@ -162,13 +163,13 @@ export default function EmployeeDashboard() {
               <Button
                 variant="outline"
                 size="icon"
-                className="bg-success/10 border-success/20"
+                className="bg-success/10 border-success/20 hover:bg-success/20 hover:scale-105 transition-all"
                 title="Varsler aktivert"
               >
                 <Bell className="w-5 h-5 text-success" />
               </Button>
             )}
-            <Button variant="ghost" size="icon" onClick={signOut}>
+            <Button variant="ghost" size="icon" onClick={signOut} className="hover:scale-105 transition-transform">
               <LogOut className="w-5 h-5" />
             </Button>
           </div>
@@ -204,16 +205,21 @@ export default function EmployeeDashboard() {
               </Card>
             ) : (
               pendingPickups.map((pickup) => (
-                <Card key={pickup.id} className="border-l-8 border-l-warning shadow-lg">
+                <Card key={pickup.id} className="border-l-8 border-l-warning shadow-lg hover:shadow-xl transition-all hover:scale-[1.01]">
                   <CardContent className="pt-6 space-y-6">
-                    {/* Child Info - LARGE */}
+                    {/* Child Info - LARGE & POLISHED */}
                     <div className="flex items-center gap-6">
-                      <Avatar className="w-24 h-24 ring-4 ring-warning/20">
-                        <AvatarImage src={pickup.child.photo_url || undefined} />
-                        <AvatarFallback className="text-3xl">
-                          {pickup.child.name[0]}
-                        </AvatarFallback>
-                      </Avatar>
+                      <div className="relative">
+                        <Avatar className="w-24 h-24 ring-4 ring-warning/20 shadow-lg">
+                          <AvatarImage src={pickup.child.photo_url || undefined} />
+                          <AvatarFallback className="text-3xl bg-gradient-to-br from-warning to-warning/80 text-warning-foreground">
+                            {pickup.child.name[0]}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="absolute -top-2 -right-2 w-8 h-8 bg-warning rounded-full flex items-center justify-center animate-pulse shadow-lg">
+                          <Clock className="w-4 h-4 text-warning-foreground" />
+                        </div>
+                      </div>
                       <div className="flex-1">
                         <h3 className="font-bold text-2xl mb-2">{pickup.child.name}</h3>
                         <div className="space-y-1">
@@ -226,18 +232,17 @@ export default function EmployeeDashboard() {
                           </p>
                         </div>
                       </div>
-                      <Badge className="bg-warning text-warning-foreground px-4 py-2 text-base">
-                        <Clock className="w-4 h-4 mr-2" />
+                      <Badge className="bg-gradient-to-r from-warning to-warning/90 text-warning-foreground px-4 py-2 text-base shadow-lg">
                         NY
                       </Badge>
                     </div>
 
-                    {/* Action Buttons - EXTRA LARGE */}
+                    {/* Action Buttons - EXTRA LARGE & BEAUTIFUL */}
                     <div className="flex gap-3">
                       <Button
                         onClick={() => handleApprove(pickup.id)}
                         disabled={isLoading}
-                        className="flex-1 h-16 text-lg font-bold bg-success hover:bg-success/90"
+                        className="flex-1 h-16 text-lg font-bold bg-gradient-to-r from-success to-success/90 hover:scale-[1.02] transition-all shadow-lg hover:shadow-glow-success"
                         size="lg"
                       >
                         <CheckCircle2 className="w-6 h-6 mr-2" />
@@ -247,7 +252,7 @@ export default function EmployeeDashboard() {
                         onClick={() => handleReject(pickup.id)}
                         disabled={isLoading}
                         variant="outline"
-                        className="h-16 px-6 border-2 border-destructive/20 hover:bg-destructive/10"
+                        className="h-16 px-6 border-2 border-destructive/20 hover:bg-destructive/10 hover:scale-[1.02] transition-all"
                         size="lg"
                       >
                         <XCircle className="w-6 h-6 text-destructive" />
