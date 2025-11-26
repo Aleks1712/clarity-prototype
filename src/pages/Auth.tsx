@@ -4,13 +4,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { Baby } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function Auth() {
   const { signIn, signUp } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<'parent' | 'employee' | 'admin'>('parent');
 
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -44,10 +47,29 @@ export default function Auth() {
 
     if (error) {
       toast.error(error.message);
-    } else {
-      toast.success('Konto opprettet! Logger inn...');
+      setIsLoading(false);
+      return;
     }
 
+    // Update role if not default parent role
+    if (selectedRole !== 'parent') {
+      // Wait a bit for the user to be created
+      setTimeout(async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { error: roleError } = await supabase
+            .from('user_roles')
+            .update({ role: selectedRole })
+            .eq('user_id', user.id);
+
+          if (roleError) {
+            console.error('Error updating role:', roleError);
+          }
+        }
+      }, 500);
+    }
+
+    toast.success('Konto opprettet! Logger inn...');
     setIsLoading(false);
   };
 
@@ -145,6 +167,31 @@ export default function Auth() {
                     className="glass border-white/20 focus:border-primary/50"
                   />
                 </div>
+                
+                <div className="space-y-3">
+                  <Label className="text-foreground font-medium">Jeg er en</Label>
+                  <RadioGroup value={selectedRole} onValueChange={(value: any) => setSelectedRole(value)} className="space-y-2">
+                    <div className="flex items-center space-x-2 glass p-3 rounded-lg border border-white/20">
+                      <RadioGroupItem value="parent" id="role-parent" />
+                      <Label htmlFor="role-parent" className="flex-1 cursor-pointer font-normal">
+                        Forelder - Henter barn fra barnehagen
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2 glass p-3 rounded-lg border border-white/20">
+                      <RadioGroupItem value="employee" id="role-employee" />
+                      <Label htmlFor="role-employee" className="flex-1 cursor-pointer font-normal">
+                        Ansatt - Jobber i barnehagen
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2 glass p-3 rounded-lg border border-white/20">
+                      <RadioGroupItem value="admin" id="role-admin" />
+                      <Label htmlFor="role-admin" className="flex-1 cursor-pointer font-normal">
+                        Administrator - Administrerer systemet
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+                
                 <Button type="submit" className="w-full bg-gradient-primary hover:shadow-glow text-lg h-12" disabled={isLoading}>
                   {isLoading ? 'Oppretter konto...' : 'Opprett konto'}
                 </Button>

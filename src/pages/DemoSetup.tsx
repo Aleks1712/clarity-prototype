@@ -75,31 +75,46 @@ export default function DemoSetup() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-secondary/5 p-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-subtle p-4 relative overflow-hidden">
+      {/* Animated background orbs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+      </div>
+      
+      <Card className="w-full max-w-md glass relative z-10">
         <CardHeader className="text-center">
-          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-            <Database className="w-8 h-8 text-primary" />
+          <div className="w-20 h-20 rounded-full bg-gradient-primary flex items-center justify-center mx-auto mb-4 shadow-glow">
+            <Database className="w-10 h-10 text-white" />
           </div>
-          <CardTitle>Sett opp demodata</CardTitle>
+          <CardTitle className="text-2xl">Sett opp demodata</CardTitle>
           <CardDescription>
             Vil du opprette testdata for å prøve systemet?
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2 text-sm">
-            <p className="font-medium">Dette vil opprette:</p>
-            <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-              <li>3 demo-barn</li>
-              <li>1 barn koblet til din konto</li>
-              <li>2 godkjente hentere</li>
+          <div className="glass p-4 rounded-xl border border-white/20 space-y-2 text-sm">
+            <p className="font-medium text-foreground">Dette vil opprette:</p>
+            <ul className="space-y-1 text-muted-foreground">
+              <li className="flex items-start gap-2">
+                <span className="text-primary">•</span>
+                <span>3 demo-barn i systemet</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-primary">•</span>
+                <span>1 barn koblet til din konto</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-primary">•</span>
+                <span>2 godkjente hentere for ditt barn</span>
+              </li>
             </ul>
           </div>
 
           <Button
             onClick={setupDemoData}
             disabled={isLoading}
-            className="w-full h-12"
+            className="w-full h-12 bg-gradient-primary hover:shadow-glow"
             size="lg"
           >
             {isLoading ? (
@@ -113,8 +128,8 @@ export default function DemoSetup() {
           </Button>
 
           <Button
-            variant="outline"
-            onClick={() => window.location.reload()}
+            variant="ghost"
+            onClick={() => window.location.href = '/'}
             className="w-full"
           >
             Hopp over

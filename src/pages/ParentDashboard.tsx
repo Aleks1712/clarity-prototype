@@ -158,24 +158,70 @@ export default function ParentDashboard() {
   // Show setup prompt if no children
   if (children.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <CardTitle>Ingen barn registrert</CardTitle>
-            <CardDescription>
-              Du har ikke barn tilknyttet kontoen din ennå.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
-              I en fullstendig versjon ville administrator registrert barn og koblet dem til foreldre.
-              For demo kan du be administrator om å legge til demodata.
-            </p>
-            <Button onClick={signOut} variant="outline" className="w-full">
-              Logg ut
+      <div className="min-h-screen bg-gradient-subtle">
+        <div className="glass border-b">
+          <div className="container max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-primary flex items-center justify-center shadow-glow">
+                <Baby className="w-7 h-7 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent">Krysselista</h1>
+                <p className="text-sm text-muted-foreground">Forelder</p>
+              </div>
+            </div>
+            <Button variant="ghost" size="icon" onClick={signOut} className="hover:scale-105 transition-transform">
+              <LogOut className="w-5 h-5" />
             </Button>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
+        
+        <div className="container max-w-2xl mx-auto px-4 py-8">
+          <Card className="glass">
+            <CardHeader className="text-center space-y-4">
+              <div className="mx-auto w-20 h-20 rounded-full bg-muted/50 flex items-center justify-center">
+                <Baby className="w-10 h-10 text-muted-foreground" />
+              </div>
+              <div className="space-y-2">
+                <CardTitle className="text-2xl">Ingen barn registrert</CardTitle>
+                <CardDescription className="text-base">
+                  Du har ikke barn tilknyttet kontoen din ennå.
+                </CardDescription>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="glass p-4 rounded-xl border border-white/20 space-y-3">
+                <h3 className="font-semibold text-foreground">Kom i gang:</h3>
+                <ol className="space-y-2 text-sm text-muted-foreground">
+                  <li className="flex gap-2">
+                    <span className="font-semibold text-primary">1.</span>
+                    <span>Kontakt barnehagens administrator for å registrere ditt barn</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="font-semibold text-primary">2.</span>
+                    <span>Administrator kobler ditt barn til din bruker</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="font-semibold text-primary">3.</span>
+                    <span>Du kan da begynne å sende henteforespørsler</span>
+                  </li>
+                </ol>
+              </div>
+              
+              <Button 
+                onClick={() => window.location.href = '/demo-setup'} 
+                className="w-full bg-gradient-accent hover:shadow-glow"
+                size="lg"
+              >
+                Last inn demodata for testing
+              </Button>
+              
+              <p className="text-xs text-center text-muted-foreground">
+                Demodata lar deg teste systemet med eksempel-barn og hentere
+              </p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }

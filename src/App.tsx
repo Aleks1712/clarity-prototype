@@ -9,6 +9,7 @@ import Onboarding from "./pages/Onboarding";
 import ParentDashboard from "./pages/ParentDashboard";
 import EmployeeDashboard from "./pages/EmployeeDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
+import DemoSetup from "./pages/DemoSetup";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -65,6 +66,11 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/auth" element={<Auth />} />
+            <Route path="/demo-setup" element={
+              <ProtectedRoute>
+                <DemoSetup />
+              </ProtectedRoute>
+            } />
             <Route
               path="/"
               element={
