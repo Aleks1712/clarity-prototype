@@ -55,15 +55,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const fetchUserRole = async (userId: string) => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('user_roles')
       .select('role')
       .eq('user_id', userId);
     
+    console.log('Fetched roles:', data, 'Error:', error);
+    
     if (data && data.length > 0) {
       // Prioritize roles: admin > employee > parent
       const roles = data.map(r => r.role);
+      console.log('User roles array:', roles);
       if (roles.includes('admin')) {
+        console.log('Setting role to admin');
         setUserRole('admin');
       } else if (roles.includes('employee')) {
         setUserRole('employee');
