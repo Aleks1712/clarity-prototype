@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePickupNotifications } from '@/hooks/usePickupNotifications';
 import { ChatDialog } from '@/components/ChatDialog';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AttendanceManager } from '@/components/AttendanceManager';
 
 interface PickupRequest {
   id: string;
@@ -285,8 +286,9 @@ export default function EmployeeDashboard() {
           </Card>
         </div>
 
-        <Tabs defaultValue="pending" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-3">
+        <Tabs defaultValue="attendance" className="space-y-4">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="attendance">Inn/Ut</TabsTrigger>
             <TabsTrigger value="pending" className="relative">
               Ventende
               {pendingPickups.length > 0 && (
@@ -298,6 +300,10 @@ export default function EmployeeDashboard() {
             <TabsTrigger value="approved">Godkjente</TabsTrigger>
             <TabsTrigger value="completed">Hentet</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="attendance">
+            <AttendanceManager />
+          </TabsContent>
 
           <TabsContent value="pending" className="space-y-4">
             {pendingPickups.length === 0 ? (
