@@ -93,6 +93,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
     });
     
+    if (!error) {
+      navigate('/');
+    }
+    
     return { error };
   };
 
