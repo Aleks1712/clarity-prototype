@@ -36,7 +36,8 @@ export default function AdminDashboard() {
   const [childToDelete, setChildToDelete] = useState<{ id: string; name: string } | null>(null);
   const [childToEdit, setChildToEdit] = useState<any | null>(null);
   const [childEditForm, setChildEditForm] = useState({ name: '', birth_date: '', notes: '' });
-  const [newUserForm, setNewUserForm] = useState({ email: '', password: '', full_name: '', role: 'employee' });
+  const [newUserForm, setNewUserForm] = useState({ email: '', password: '', full_name: '' });
+  const [showAddUserForm, setShowAddUserForm] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -412,7 +413,7 @@ export default function AdminDashboard() {
           email: newUserForm.email,
           password: newUserForm.password,
           full_name: newUserForm.full_name,
-          role: newUserForm.role,
+          role: 'employee',
         }
       });
 
@@ -424,8 +425,9 @@ export default function AdminDashboard() {
         throw new Error(response.data.error);
       }
 
-      toast.success(`Bruker ${newUserForm.full_name} opprettet!`);
-      setNewUserForm({ email: '', password: '', full_name: '', role: 'employee' });
+      toast.success(`Ansatt ${newUserForm.full_name} opprettet!`);
+      setNewUserForm({ email: '', password: '', full_name: '' });
+      setShowAddUserForm(false);
       fetchData();
     } catch (error: any) {
       toast.error('Kunne ikke opprette bruker: ' + error.message);
@@ -543,77 +545,92 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
 
-            {/* Add New User Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <UserPlus className="w-5 h-5" />
-                  Opprett ny bruker
-                </CardTitle>
-                <CardDescription>
-                  Legg til nye ansatte eller brukere i systemet
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleCreateUser} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="newUserName">Fullt navn</Label>
-                      <Input
-                        id="newUserName"
-                        value={newUserForm.full_name}
-                        onChange={(e) => setNewUserForm({ ...newUserForm, full_name: e.target.value })}
-                        placeholder="Ola Nordmann"
-                        required
-                      />
+            {/* Add New Employee Button/Form */}
+            {!showAddUserForm ? (
+              <Button 
+                onClick={() => setShowAddUserForm(true)} 
+                className="w-full"
+                variant="outline"
+              >
+                <UserPlus className="w-4 h-4 mr-2" />
+                Legg til ny ansatt
+              </Button>
+            ) : (
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <UserPlus className="w-5 h-5" />
+                        Opprett ny ansatt
+                      </CardTitle>
+                      <CardDescription>
+                        Legg til en ny ansatt i systemet
+                      </CardDescription>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="newUserEmail">E-post</Label>
-                      <Input
-                        id="newUserEmail"
-                        type="email"
-                        value={newUserForm.email}
-                        onChange={(e) => setNewUserForm({ ...newUserForm, email: e.target.value })}
-                        placeholder="ola@example.com"
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="newUserPassword">Passord</Label>
-                      <Input
-                        id="newUserPassword"
-                        type="password"
-                        value={newUserForm.password}
-                        onChange={(e) => setNewUserForm({ ...newUserForm, password: e.target.value })}
-                        placeholder="Minst 6 tegn"
-                        required
-                        minLength={6}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="newUserRole">Rolle</Label>
-                      <Select
-                        value={newUserForm.role}
-                        onValueChange={(value) => setNewUserForm({ ...newUserForm, role: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Velg rolle" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="parent">Forelder</SelectItem>
-                          <SelectItem value="employee">Ansatt</SelectItem>
-                          <SelectItem value="admin">Admin</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => setShowAddUserForm(false)}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
                   </div>
-                  <Button type="submit" disabled={isLoading}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Opprett bruker
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleCreateUser} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="newUserName">Fullt navn</Label>
+                        <Input
+                          id="newUserName"
+                          value={newUserForm.full_name}
+                          onChange={(e) => setNewUserForm({ ...newUserForm, full_name: e.target.value })}
+                          placeholder="Ola Nordmann"
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="newUserEmail">E-post</Label>
+                        <Input
+                          id="newUserEmail"
+                          type="email"
+                          value={newUserForm.email}
+                          onChange={(e) => setNewUserForm({ ...newUserForm, email: e.target.value })}
+                          placeholder="ola@example.com"
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="newUserPassword">Passord</Label>
+                        <Input
+                          id="newUserPassword"
+                          type="password"
+                          value={newUserForm.password}
+                          onChange={(e) => setNewUserForm({ ...newUserForm, password: e.target.value })}
+                          placeholder="Minst 6 tegn"
+                          required
+                          minLength={6}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button type="submit" disabled={isLoading}>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Opprett ansatt
+                      </Button>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={() => setShowAddUserForm(false)}
+                      >
+                        Avbryt
+                      </Button>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="employees" className="space-y-4">
