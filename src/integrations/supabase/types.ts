@@ -173,6 +173,7 @@ export type Database = {
           approved_at: string | null
           approved_by: string | null
           child_id: string
+          completed_at: string | null
           estimated_arrival_time: string | null
           id: string
           notes: string | null
@@ -186,6 +187,7 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           child_id: string
+          completed_at?: string | null
           estimated_arrival_time?: string | null
           id?: string
           notes?: string | null
@@ -199,6 +201,7 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           child_id?: string
+          completed_at?: string | null
           estimated_arrival_time?: string | null
           id?: string
           notes?: string | null
