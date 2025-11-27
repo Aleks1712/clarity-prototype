@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -9,7 +10,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { LanguageSelector } from '@/components/LanguageSelector';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Baby, Users, Clock, CheckCircle2, LogOut, Bell, BellOff, MessageCircle, Shield, Settings } from 'lucide-react';
+import { Baby, Users, Clock, CheckCircle2, LogOut, Bell, BellOff, MessageCircle, Shield, Settings, RefreshCcw } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { usePickupNotifications } from '@/hooks/usePickupNotifications';
@@ -29,7 +30,8 @@ interface AuthorizedPickup {
 }
 
 export default function ParentDashboard() {
-  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+  const { user, signOut, userRoles, clearSelectedRole } = useAuth();
   const { t } = useLanguage();
   const [children, setChildren] = useState<Child[]>([]);
   const [selectedChild, setSelectedChild] = useState<string | null>(null);
@@ -237,9 +239,21 @@ export default function ParentDashboard() {
                 <p className="text-sm text-muted-foreground">Forelder</p>
               </div>
             </div>
-            <Button variant="ghost" size="icon" onClick={signOut} className="hover:scale-105 transition-transform">
-              <LogOut className="w-5 h-5" />
-            </Button>
+            <div className="flex items-center gap-2">
+              {userRoles.length > 1 && (
+                <Button 
+                  variant="outline" 
+                  onClick={() => { clearSelectedRole(); navigate('/'); }}
+                  className="hover:scale-105 transition-transform"
+                >
+                  <RefreshCcw className="w-4 h-4 mr-2" />
+                  Bytt rolle
+                </Button>
+              )}
+              <Button variant="ghost" size="icon" onClick={signOut} className="hover:scale-105 transition-transform">
+                <LogOut className="w-5 h-5" />
+              </Button>
+            </div>
           </div>
         </div>
         
@@ -328,6 +342,16 @@ export default function ParentDashboard() {
                 title={t('notificationsEnabled')}
               >
                 <Bell className="w-5 h-5 text-success" />
+              </Button>
+            )}
+            {userRoles.length > 1 && (
+              <Button 
+                variant="outline" 
+                onClick={() => { clearSelectedRole(); navigate('/'); }}
+                className="hover:scale-105 transition-transform"
+              >
+                <RefreshCcw className="w-4 h-4 mr-2" />
+                Bytt rolle
               </Button>
             )}
             <Button variant="ghost" size="icon" onClick={signOut} className="hover:scale-105 transition-transform">

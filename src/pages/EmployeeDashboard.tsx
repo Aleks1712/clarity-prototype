@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -6,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Baby, Clock, CheckCircle2, XCircle, LogOut, Bell, BellOff, MessageCircle, Zap } from 'lucide-react';
+import { Baby, Clock, CheckCircle2, XCircle, LogOut, Bell, BellOff, MessageCircle, Zap, RefreshCcw } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePickupNotifications } from '@/hooks/usePickupNotifications';
 import { ChatDialog } from '@/components/ChatDialog';
@@ -34,7 +35,8 @@ interface PickupRequest {
 }
 
 export default function EmployeeDashboard() {
-  const { signOut } = useAuth();
+  const navigate = useNavigate();
+  const { signOut, userRoles, clearSelectedRole } = useAuth();
   const [pendingPickups, setPendingPickups] = useState<PickupRequest[]>([]);
   const [approvedPickups, setApprovedPickups] = useState<PickupRequest[]>([]);
   const [completedPickups, setCompletedPickups] = useState<PickupRequest[]>([]);
@@ -241,6 +243,16 @@ export default function EmployeeDashboard() {
                 title="Varsler aktivert"
               >
                 <Bell className="w-5 h-5 text-success" />
+              </Button>
+            )}
+            {userRoles.length > 1 && (
+              <Button 
+                variant="outline" 
+                onClick={() => { clearSelectedRole(); navigate('/'); }}
+                className="hover:scale-105 transition-transform"
+              >
+                <RefreshCcw className="w-4 h-4 mr-2" />
+                Bytt rolle
               </Button>
             )}
             <Button variant="ghost" size="icon" onClick={signOut} className="hover:scale-105 transition-transform">
