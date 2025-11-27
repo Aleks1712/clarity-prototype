@@ -64,6 +64,15 @@ serve(async (req) => {
       );
     }
 
+    // Validate password: min 8 chars, 1 uppercase, 1 number
+    const passwordRegex = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
+    if (!passwordRegex.test(password)) {
+      return new Response(
+        JSON.stringify({ error: "Passordet må inneholde minst 8 tegn, 1 stor bokstav og 1 tall" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Create the user
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
       email,
