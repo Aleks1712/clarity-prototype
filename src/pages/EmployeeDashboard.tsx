@@ -10,6 +10,7 @@ import { Baby, Clock, CheckCircle2, XCircle, LogOut, Bell, BellOff, MessageCircl
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePickupNotifications } from '@/hooks/usePickupNotifications';
 import { ChatDialog } from '@/components/ChatDialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 interface PickupRequest {
   id: string;
@@ -44,6 +45,8 @@ export default function EmployeeDashboard() {
   );
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [selectedChild, setSelectedChild] = useState<{ id: string; name: string; photo_url: string | null } | null>(null);
+  const [confirmPickupId, setConfirmPickupId] = useState<string | null>(null);
+  const [pickupTime, setPickupTime] = useState<string>('');
   
   const { requestNotificationPermission } = usePickupNotifications();
 
@@ -163,6 +166,15 @@ export default function EmployeeDashboard() {
   };
 
   const handleMarkAsCompleted = async (pickupId: string) => {
+    // Open confirmation dialog with current time
+    const now = new Date();
+    setPickupTime(now.toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' }));
+    setConfirmPickupId(pickupId);
+  };
+
+  const confirmMarkAsCompleted = async () => {
+    if (!confirmPickupId) return;
+    
     setIsLoading(true);
 
     const { error } = await supabase
@@ -171,7 +183,7 @@ export default function EmployeeDashboard() {
         status: 'completed',
         completed_at: new Date().toISOString(),
       })
-      .eq('id', pickupId);
+      .eq('id', confirmPickupId);
 
     if (error) {
       toast.error('Kunne ikke markere som hentet');
@@ -180,6 +192,7 @@ export default function EmployeeDashboard() {
     }
 
     setIsLoading(false);
+    setConfirmPickupId(null);
   };
 
   return (
@@ -488,6 +501,54 @@ export default function EmployeeDashboard() {
           childPhoto={selectedChild.photo_url}
         />
       )}
+
+      {/* Pickup Confirmation Dialog */}
+      <Dialog open={!!confirmPickupId} onOpenChange={() => setConfirmPickupId(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+              <Clock className="w-6 h-6 text-primary" />
+              Bekreft henting
+            </DialogTitle>
+            <DialogDescription className="text-base pt-2">
+              Registrer klokkeslett for når barnet ble hentet
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-4 py-4">
+            <div className="bg-gradient-to-r from-primary/10 to-primary/5 p-6 rounded-lg border border-primary/20">
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground mb-2">Hentetidspunkt</p>
+                <p className="text-4xl font-bold text-primary">{pickupTime}</p>
+                <p className="text-xs text-muted-foreground mt-2">
+                  {new Date().toLocaleDateString('nb-NO', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  })}
+                </p>
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="flex gap-2 sm:gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setConfirmPickupId(null)}
+              className="flex-1"
+            >
+              Avbryt
+            </Button>
+            <Button
+              onClick={confirmMarkAsCompleted}
+              disabled={isLoading}
+              className="flex-1 bg-gradient-to-r from-success to-success/90"
+            >
+              <CheckCircle2 className="w-4 h-4 mr-2" />
+              Bekreft henting
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
