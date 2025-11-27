@@ -234,6 +234,7 @@ export type Database = {
           full_name: string
           id: string
           phone: string | null
+          preferred_language: string
           requires_approval: boolean
         }
         Insert: {
@@ -241,6 +242,7 @@ export type Database = {
           full_name: string
           id: string
           phone?: string | null
+          preferred_language?: string
           requires_approval?: boolean
         }
         Update: {
@@ -248,6 +250,7 @@ export type Database = {
           full_name?: string
           id?: string
           phone?: string | null
+          preferred_language?: string
           requires_approval?: boolean
         }
         Relationships: []

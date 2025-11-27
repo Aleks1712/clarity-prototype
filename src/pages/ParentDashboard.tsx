@@ -5,6 +5,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { LanguageSelector } from '@/components/LanguageSelector';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Baby, Users, Clock, CheckCircle2, LogOut, Bell, BellOff, MessageCircle, Shield, Settings } from 'lucide-react';
@@ -28,6 +30,7 @@ interface AuthorizedPickup {
 
 export default function ParentDashboard() {
   const { user, signOut } = useAuth();
+  const { t } = useLanguage();
   const [children, setChildren] = useState<Child[]>([]);
   const [selectedChild, setSelectedChild] = useState<string | null>(null);
   const [authorizedPickups, setAuthorizedPickups] = useState<AuthorizedPickup[]>([]);
@@ -294,17 +297,18 @@ export default function ParentDashboard() {
               <Baby className="w-7 h-7 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">Krysselista</h1>
-              <p className="text-sm text-muted-foreground">Forelder</p>
+              <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">{t('appName')}</h1>
+              <p className="text-sm text-muted-foreground">{t('parent')}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <LanguageSelector />
             {!notificationsEnabled && (
               <Button
                 variant="outline"
                 size="icon"
                 onClick={handleEnableNotifications}
-                title="Aktiver varsler"
+                title={t('enableNotifications')}
                 className="hover:scale-105 transition-transform"
               >
                 <BellOff className="w-5 h-5" />
@@ -315,7 +319,7 @@ export default function ParentDashboard() {
                 variant="outline"
                 size="icon"
                 className="bg-success/10 border-success/20 hover:bg-success/20 hover:scale-105 transition-all"
-                title="Varsler aktivert"
+                title={t('notificationsEnabled')}
               >
                 <Bell className="w-5 h-5 text-success" />
               </Button>
@@ -482,9 +486,9 @@ export default function ParentDashboard() {
                 <Settings className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <CardTitle className="text-lg">Godkjenning av henting</CardTitle>
+                <CardTitle className="text-lg">{t('approvalSettings')}</CardTitle>
                 <CardDescription>
-                  Velg hvordan dine hentemeldinger skal håndteres
+                  {t('approvalDescription')}
                 </CardDescription>
               </div>
             </div>
@@ -493,12 +497,12 @@ export default function ParentDashboard() {
             <div className="flex items-center justify-between p-4 rounded-xl bg-muted/50">
               <div className="space-y-1 flex-1">
                 <Label htmlFor="requires-approval" className="text-base font-semibold cursor-pointer">
-                  Krever godkjenning fra personalet
+                  {t('requiresApproval')}
                 </Label>
                 <p className="text-sm text-muted-foreground">
                   {requiresApproval 
-                    ? 'Personalet må godkjenne hver hentemelding før du kan hente' 
-                    : 'Hentemeldinger godkjennes automatisk - raskere og mer fleksibelt'}
+                    ? t('requiresApprovalOn')
+                    : t('requiresApprovalOff')}
                 </p>
               </div>
               <Switch
@@ -513,10 +517,9 @@ export default function ParentDashboard() {
               <div className="flex gap-3">
                 <Shield className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
                 <div className="space-y-1 text-sm">
-                  <p className="font-semibold text-primary">Sikkerhet</p>
+                  <p className="font-semibold text-primary">{t('security')}</p>
                   <p className="text-muted-foreground">
-                    Personalet verifiserer alltid identitet fysisk ved henting - 
-                    uavhengig av denne innstillingen.
+                    {t('securityNote')}
                   </p>
                 </div>
               </div>
@@ -532,7 +535,7 @@ export default function ParentDashboard() {
           size="lg"
         >
           <MessageCircle className="w-6 h-6 mr-3" />
-          Chat med barnehagen
+          {t('chatWithKindergarten')}
         </Button>
 
         {/* Authorized Pickups Manager */}
