@@ -225,19 +225,23 @@ export default function AdminDashboard() {
     setIsLoading(true);
 
     try {
-      // Delete user roles first
-      await supabase
-        .from('user_roles')
-        .delete()
-        .eq('user_id', userToDelete.id);
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error('Ikke innlogget');
+      }
 
-      // Delete profile (this will cascade to related data)
-      const { error } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', userToDelete.id);
+      const response = await supabase.functions.invoke('delete-user', {
+        body: { userId: userToDelete.id }
+      });
 
-      if (error) throw error;
+      if (response.error) {
+        throw new Error(response.error.message || 'Kunne ikke fjerne bruker');
+      }
+
+      if (response.data?.error) {
+        throw new Error(response.data.error);
+      }
 
       toast.success(`${userToDelete.name} er fjernet fra systemet`);
       fetchData();
