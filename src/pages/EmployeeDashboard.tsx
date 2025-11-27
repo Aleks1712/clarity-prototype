@@ -45,8 +45,14 @@ export default function EmployeeDashboard() {
   );
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [selectedChild, setSelectedChild] = useState<{ id: string; name: string; photo_url: string | null } | null>(null);
-  const [confirmPickupId, setConfirmPickupId] = useState<string | null>(null);
-  const [pickupTime, setPickupTime] = useState<string>('');
+  const [confirmPickupData, setConfirmPickupData] = useState<{
+    pickupId: string;
+    childName: string;
+    childPhoto: string | null;
+    pickupPersonName: string;
+    parentName: string;
+    pickupTime: string;
+  } | null>(null);
   
   const { requestNotificationPermission } = usePickupNotifications();
 
@@ -165,15 +171,21 @@ export default function EmployeeDashboard() {
     setIsLoading(false);
   };
 
-  const handleMarkAsCompleted = async (pickupId: string) => {
-    // Open confirmation dialog with current time
+  const handleMarkAsCompleted = async (pickup: PickupRequest) => {
+    // Open confirmation dialog with current time and all pickup details
     const now = new Date();
-    setPickupTime(now.toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' }));
-    setConfirmPickupId(pickupId);
+    setConfirmPickupData({
+      pickupId: pickup.id,
+      childName: pickup.child.name,
+      childPhoto: pickup.child.photo_url,
+      pickupPersonName: pickup.pickup_person_name,
+      parentName: pickup.parent.full_name,
+      pickupTime: now.toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' }),
+    });
   };
 
   const confirmMarkAsCompleted = async () => {
-    if (!confirmPickupId) return;
+    if (!confirmPickupData) return;
     
     setIsLoading(true);
 
@@ -183,7 +195,7 @@ export default function EmployeeDashboard() {
         status: 'completed',
         completed_at: new Date().toISOString(),
       })
-      .eq('id', confirmPickupId);
+      .eq('id', confirmPickupData.pickupId);
 
     if (error) {
       toast.error('Kunne ikke markere som hentet');
@@ -192,7 +204,7 @@ export default function EmployeeDashboard() {
     }
 
     setIsLoading(false);
-    setConfirmPickupId(null);
+    setConfirmPickupData(null);
   };
 
   return (
@@ -422,7 +434,7 @@ export default function EmployeeDashboard() {
                           </Badge>
                         )}
                         <Button
-                          onClick={() => handleMarkAsCompleted(pickup.id)}
+                          onClick={() => handleMarkAsCompleted(pickup)}
                           disabled={isLoading}
                           size="sm"
                           className="bg-gradient-to-r from-primary to-primary/90 hover:scale-105 transition-all"
@@ -503,37 +515,61 @@ export default function EmployeeDashboard() {
       )}
 
       {/* Pickup Confirmation Dialog */}
-      <Dialog open={!!confirmPickupId} onOpenChange={() => setConfirmPickupId(null)}>
-        <DialogContent className="sm:max-w-md">
+      <Dialog open={!!confirmPickupData} onOpenChange={() => setConfirmPickupData(null)}>
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold flex items-center gap-2">
               <Clock className="w-6 h-6 text-primary" />
               Bekreft henting
             </DialogTitle>
             <DialogDescription className="text-base pt-2">
-              Registrer klokkeslett for når barnet ble hentet
+              Kontroller informasjonen og bekreft hentetidspunkt
             </DialogDescription>
           </DialogHeader>
-          <div className="flex flex-col gap-4 py-4">
-            <div className="bg-gradient-to-r from-primary/10 to-primary/5 p-6 rounded-lg border border-primary/20">
-              <div className="text-center">
-                <p className="text-sm text-muted-foreground mb-2">Hentetidspunkt</p>
-                <p className="text-4xl font-bold text-primary">{pickupTime}</p>
-                <p className="text-xs text-muted-foreground mt-2">
-                  {new Date().toLocaleDateString('nb-NO', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                  })}
-                </p>
+          
+          {confirmPickupData && (
+            <div className="flex flex-col gap-4 py-4">
+              {/* Child Info */}
+              <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
+                <Avatar className="w-16 h-16 border-2 border-primary/20">
+                  <AvatarImage src={confirmPickupData.childPhoto || undefined} />
+                  <AvatarFallback className="text-xl">{confirmPickupData.childName[0]}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <p className="text-sm text-muted-foreground">Barn</p>
+                  <p className="text-lg font-bold">{confirmPickupData.childName}</p>
+                  <p className="text-sm text-muted-foreground">Forelder: {confirmPickupData.parentName}</p>
+                </div>
+              </div>
+
+              {/* Pickup Person */}
+              <div className="p-4 bg-muted/50 rounded-lg">
+                <p className="text-sm text-muted-foreground mb-1">Hentes av</p>
+                <p className="text-lg font-semibold">{confirmPickupData.pickupPersonName}</p>
+              </div>
+
+              {/* Time Display */}
+              <div className="bg-gradient-to-r from-success/20 to-success/10 p-6 rounded-lg border-2 border-success/30">
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground mb-2">Hentetidspunkt</p>
+                  <p className="text-5xl font-bold text-success mb-1">{confirmPickupData.pickupTime}</p>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {new Date().toLocaleDateString('nb-NO', { 
+                      weekday: 'long', 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
+          )}
+
           <DialogFooter className="flex gap-2 sm:gap-2">
             <Button
               variant="outline"
-              onClick={() => setConfirmPickupId(null)}
+              onClick={() => setConfirmPickupData(null)}
               className="flex-1"
             >
               Avbryt
@@ -541,9 +577,9 @@ export default function EmployeeDashboard() {
             <Button
               onClick={confirmMarkAsCompleted}
               disabled={isLoading}
-              className="flex-1 bg-gradient-to-r from-success to-success/90"
+              className="flex-1 bg-gradient-to-r from-success to-success/90 hover:shadow-lg text-base font-semibold py-6"
             >
-              <CheckCircle2 className="w-4 h-4 mr-2" />
+              <CheckCircle2 className="w-5 h-5 mr-2" />
               Bekreft henting
             </Button>
           </DialogFooter>
