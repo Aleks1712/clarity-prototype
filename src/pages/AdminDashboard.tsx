@@ -6,13 +6,14 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Baby, Users, Shield, LogOut, Plus } from 'lucide-react';
+import { Baby, Users, Shield, LogOut, Plus, Briefcase } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function AdminDashboard() {
   const { signOut } = useAuth();
   const [users, setUsers] = useState<any[]>([]);
+  const [employees, setEmployees] = useState<any[]>([]);
   const [children, setChildren] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -21,24 +22,59 @@ export default function AdminDashboard() {
   }, []);
 
   const fetchData = async () => {
-    const { data: usersData } = await supabase
+    // Fetch profiles and roles separately since there's no FK relationship
+    const { data: profilesData } = await supabase
       .from('profiles')
-      .select(`
-        *,
-        roles:user_roles(role)
-      `);
+      .select('*');
 
+    const { data: rolesData } = await supabase
+      .from('user_roles')
+      .select('user_id, role');
+
+    // Combine profiles with their roles
+    if (profilesData && rolesData) {
+      const usersWithRoles = profilesData.map(profile => ({
+        ...profile,
+        roles: rolesData.filter(r => r.user_id === profile.id).map(r => ({ role: r.role }))
+      }));
+      setUsers(usersWithRoles);
+      
+      // Filter employees (users with employee role)
+      const employeeUsers = usersWithRoles.filter(u => 
+        u.roles.some((r: any) => r.role === 'employee')
+      );
+      setEmployees(employeeUsers);
+    }
+
+    // Fetch children
     const { data: childrenData } = await supabase
       .from('children')
-      .select(`
-        *,
-        parents:parent_children(
-          parent:profiles(full_name)
-        )
-      `);
+      .select('*');
 
-    if (usersData) setUsers(usersData);
-    if (childrenData) setChildren(childrenData);
+    // Fetch parent-child relationships
+    const { data: parentChildrenData } = await supabase
+      .from('parent_children')
+      .select('child_id, parent_id');
+
+    // Fetch parent names
+    const parentIds = [...new Set(parentChildrenData?.map(pc => pc.parent_id) || [])];
+    const { data: parentProfiles } = await supabase
+      .from('profiles')
+      .select('id, full_name')
+      .in('id', parentIds);
+
+    // Combine children with their parents
+    if (childrenData) {
+      const childrenWithParents = childrenData.map(child => ({
+        ...child,
+        parents: parentChildrenData
+          ?.filter(pc => pc.child_id === child.id)
+          .map(pc => ({
+            parent: parentProfiles?.find(p => p.id === pc.parent_id)
+          })) || []
+      }));
+      setChildren(childrenWithParents);
+    }
   };
 
   const handleAddChild = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -194,10 +230,14 @@ export default function AdminDashboard() {
 
       <div className="container max-w-6xl mx-auto px-4 py-6">
         <Tabs defaultValue="users" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="users">
               <Users className="w-4 h-4 mr-2" />
               Brukere
+            </TabsTrigger>
+            <TabsTrigger value="employees">
+              <Briefcase className="w-4 h-4 mr-2" />
+              Ansatte
             </TabsTrigger>
             <TabsTrigger value="children">
               <Baby className="w-4 h-4 mr-2" />
@@ -242,6 +282,55 @@ export default function AdminDashboard() {
                     </div>
                   ))}
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="employees" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Briefcase className="w-5 h-5" />
+                  Ansatte i barnehagen
+                </CardTitle>
+                <CardDescription>
+                  Oversikt over alle ansatte (IT-ansvarlig og ledere har tilgang her)
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {employees.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Briefcase className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p>Ingen ansatte registrert ennå.</p>
+                    <p className="text-sm mt-2">
+                      Tildel "Ansatt"-rolle til en bruker i Brukere-fanen.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {employees.map((employee) => (
+                      <div
+                        key={employee.id}
+                        className="flex items-center justify-between p-4 border rounded-lg bg-secondary/10"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                            <Briefcase className="w-5 h-5 text-primary" />
+                          </div>
+                          <div>
+                            <h4 className="font-semibold">{employee.full_name}</h4>
+                            <p className="text-sm text-muted-foreground">
+                              {employee.phone || 'Ingen telefon registrert'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          Roller: {employee.roles?.map((r: any) => r.role).join(', ')}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
