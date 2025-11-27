@@ -16,7 +16,10 @@ export type Database = {
     Tables: {
       authorized_pickups: {
         Row: {
+          added_by: string | null
           child_id: string
+          consent_date: string | null
+          consent_given: boolean
           created_at: string | null
           id: string
           name: string
@@ -25,7 +28,10 @@ export type Database = {
           relationship: string
         }
         Insert: {
+          added_by?: string | null
           child_id: string
+          consent_date?: string | null
+          consent_given?: boolean
           created_at?: string | null
           id?: string
           name: string
@@ -34,7 +40,10 @@ export type Database = {
           relationship: string
         }
         Update: {
+          added_by?: string | null
           child_id?: string
+          consent_date?: string | null
+          consent_given?: boolean
           created_at?: string | null
           id?: string
           name?: string
