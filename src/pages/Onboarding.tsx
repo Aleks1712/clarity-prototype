@@ -4,57 +4,25 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Baby, Users, Shield } from 'lucide-react';
+import { Baby } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-
-const roles = [
-  {
-    value: 'parent',
-    label: 'Forelder',
-    icon: Baby,
-    description: 'Jeg skal melde henting av mitt barn',
-    color: 'primary',
-  },
-  {
-    value: 'employee',
-    label: 'Ansatt',
-    icon: Users,
-    description: 'Jeg jobber i barnehagen og skal godkjenne hentinger',
-    color: 'secondary',
-  },
-  {
-    value: 'admin',
-    label: 'Administrator',
-    icon: Shield,
-    description: 'Jeg skal administrere systemet',
-    color: 'destructive',
-  },
-];
 
 export default function Onboarding() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSelectRole = async () => {
-    if (!selectedRole || !user) return;
+    if (!user) return;
 
     setIsLoading(true);
 
-    // Remove existing parent role
-    await supabase
-      .from('user_roles')
-      .delete()
-      .eq('user_id', user.id)
-      .eq('role', 'parent');
-
-    // Add selected role
+    // User can only register as parent (security fix)
     const { error } = await supabase
       .from('user_roles')
       .insert({
         user_id: user.id,
-        role: selectedRole as 'parent' | 'employee' | 'admin',
+        role: 'parent',
       });
 
     if (error) {
@@ -71,58 +39,57 @@ export default function Onboarding() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-secondary/10 p-4">
-      <Card className="w-full max-w-2xl">
+      <Card className="w-full max-w-lg">
         <CardHeader className="text-center">
-          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-            <Baby className="w-8 h-8 text-primary" />
+          <div className="w-16 h-16 rounded-full bg-gradient-primary flex items-center justify-center mx-auto mb-4 shadow-glow">
+            <Baby className="w-8 h-8 text-white" />
           </div>
           <CardTitle className="text-2xl">Velkommen til Krysselista!</CardTitle>
           <CardDescription>
-            Velg din rolle for å komme i gang
+            Fullfør registreringen for å komme i gang
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-3">
-            {roles.map((role) => {
-              const Icon = role.icon;
-              const isSelected = selectedRole === role.value;
-              
-              return (
-                <button
-                  key={role.value}
-                  onClick={() => setSelectedRole(role.value)}
-                  className={`p-6 rounded-lg border-2 transition-all text-left ${
-                    isSelected
-                      ? `border-${role.color} bg-${role.color}/5`
-                      : 'border-border hover:border-muted-foreground/50'
-                  }`}
-                >
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-4 ${
-                    isSelected ? `bg-${role.color}/10` : 'bg-muted'
-                  }`}>
-                    <Icon className={`w-6 h-6 ${
-                      isSelected ? `text-${role.color}` : 'text-muted-foreground'
-                    }`} />
-                  </div>
-                  <h3 className="font-semibold mb-2">{role.label}</h3>
-                  <p className="text-sm text-muted-foreground">{role.description}</p>
-                </button>
-              );
-            })}
+        <CardContent className="space-y-6">
+          {/* Parent Role Card */}
+          <div className="p-6 rounded-xl border-2 border-primary bg-primary/5">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <Baby className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-bold text-lg mb-1">Forelder</h3>
+                <p className="text-sm text-muted-foreground">
+                  Du registreres som forelder og kan sende henteforespørsler for dine barn.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Info Box */}
+          <div className="glass p-4 rounded-xl border border-primary/20 text-sm">
+            <p className="mb-2">
+              <span className="font-semibold text-foreground">Som forelder kan du:</span>
+            </p>
+            <ul className="space-y-1 text-muted-foreground ml-4">
+              <li>• Sende henteforespørsler</li>
+              <li>• Chatte med barnehagen</li>
+              <li>• Se historikk over hentinger</li>
+            </ul>
+            <p className="text-xs mt-3 text-primary border-t border-primary/20 pt-3">
+              📌 <strong>Trenger du ansatt- eller admin-tilgang?</strong>
+              <br />
+              Kontakt barnehagens administrator for å få tildelt riktig rolle.
+            </p>
           </div>
 
           <Button
             onClick={handleSelectRole}
-            disabled={!selectedRole || isLoading}
-            className="w-full h-12"
+            disabled={isLoading}
+            className="w-full h-14 text-lg bg-gradient-primary hover:shadow-glow"
             size="lg"
           >
-            {isLoading ? 'Lagrer...' : 'Fortsett'}
+            {isLoading ? 'Lagrer...' : 'Fortsett som forelder'}
           </Button>
-
-          <p className="text-xs text-center text-muted-foreground">
-            Dette er en demo. I produksjon ville admin-godkjenning vært påkrevd.
-          </p>
         </CardContent>
       </Card>
     </div>

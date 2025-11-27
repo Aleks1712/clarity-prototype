@@ -7,8 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Baby, Users, Clock, CheckCircle2, LogOut, Bell, BellOff } from 'lucide-react';
+import { Baby, Users, Clock, CheckCircle2, LogOut, Bell, BellOff, MessageCircle } from 'lucide-react';
 import { usePickupNotifications } from '@/hooks/usePickupNotifications';
+import { ChatDialog } from '@/components/ChatDialog';
 
 interface Child {
   id: string;
@@ -33,6 +34,8 @@ export default function ParentDashboard() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(
     typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted'
   );
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [estimatedMinutes, setEstimatedMinutes] = useState<number>(15);
 
   const { requestNotificationPermission } = usePickupNotifications();
 
@@ -130,6 +133,8 @@ export default function ParentDashboard() {
     setIsSubmitting(true);
 
     const pickupPerson = authorizedPickups.find(p => p.id === selectedPickup);
+    const estimatedArrival = new Date();
+    estimatedArrival.setMinutes(estimatedArrival.getMinutes() + estimatedMinutes);
 
     const { error } = await supabase
       .from('pickup_logs')
@@ -139,13 +144,14 @@ export default function ParentDashboard() {
         pickup_person_name: pickupPerson?.name || '',
         pickup_person_id: selectedPickup === 'parent' ? null : selectedPickup,
         status: 'pending',
+        estimated_arrival_time: estimatedArrival.toISOString(),
       });
 
     if (error) {
       toast.error('Kunne ikke sende forespørsel');
     } else {
       toast.success('Henteforespørsel sendt!', {
-        description: 'Venter på godkjenning fra personalet.',
+        description: `Anslått ankomst: ${estimatedMinutes} min`,
       });
       setSelectedPickup('');
     }
@@ -317,6 +323,23 @@ export default function ParentDashboard() {
               </div>
             )}
 
+            {/* Estimated Arrival Time */}
+            <div className="space-y-3">
+              <label className="text-lg font-bold">Anslått ankomst</label>
+              <Select value={estimatedMinutes.toString()} onValueChange={(v) => setEstimatedMinutes(parseInt(v))}>
+                <SelectTrigger className="w-full h-14 text-base border-2">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="5">Om 5 minutter</SelectItem>
+                  <SelectItem value="10">Om 10 minutter</SelectItem>
+                  <SelectItem value="15">Om 15 minutter</SelectItem>
+                  <SelectItem value="20">Om 20 minutter</SelectItem>
+                  <SelectItem value="30">Om 30 minutter</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Who Picks Up - LARGE BUTTONS */}
             <div className="space-y-3">
               <label className="text-lg font-bold">Hvem henter?</label>
@@ -392,10 +415,21 @@ export default function ParentDashboard() {
             </Button>
 
             <p className="text-sm text-center text-muted-foreground">
-              Personalet godkjenner før utlevering
+              Personalet bekrefter når barnet er hentet
             </p>
           </CardContent>
         </Card>
+
+        {/* Chat Button */}
+        <Button
+          onClick={() => setIsChatOpen(true)}
+          variant="outline"
+          className="w-full h-16 text-lg border-2 hover:border-primary"
+          size="lg"
+        >
+          <MessageCircle className="w-6 h-6 mr-3" />
+          Chat med barnehagen
+        </Button>
 
         {/* Last Pickup Info */}
         {lastPickup && (
@@ -444,6 +478,17 @@ export default function ParentDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Chat Dialog */}
+      {currentChild && (
+        <ChatDialog
+          open={isChatOpen}
+          onOpenChange={setIsChatOpen}
+          childId={currentChild.id}
+          childName={currentChild.name}
+          childPhoto={currentChild.photo_url}
+        />
+      )}
     </div>
   );
 }
