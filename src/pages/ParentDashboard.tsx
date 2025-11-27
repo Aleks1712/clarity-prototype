@@ -7,9 +7,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Baby, Users, Clock, CheckCircle2, LogOut, Bell, BellOff, MessageCircle } from 'lucide-react';
+import { Baby, Users, Clock, CheckCircle2, LogOut, Bell, BellOff, MessageCircle, Shield } from 'lucide-react';
 import { usePickupNotifications } from '@/hooks/usePickupNotifications';
 import { ChatDialog } from '@/components/ChatDialog';
+import { AuthorizedPickupsManager } from '@/components/AuthorizedPickupsManager';
 
 interface Child {
   id: string;
@@ -107,7 +108,8 @@ export default function ParentDashboard() {
     const { data } = await supabase
       .from('authorized_pickups')
       .select('id, name, relationship')
-      .eq('child_id', childId);
+      .eq('child_id', childId)
+      .eq('consent_given', true); // Only show consented pickups
 
     if (data) {
       // Add parent as option
@@ -430,6 +432,14 @@ export default function ParentDashboard() {
           <MessageCircle className="w-6 h-6 mr-3" />
           Chat med barnehagen
         </Button>
+
+        {/* Authorized Pickups Manager */}
+        {currentChild && (
+          <AuthorizedPickupsManager
+            childId={currentChild.id}
+            childName={currentChild.name}
+          />
+        )}
 
         {/* Last Pickup Info */}
         {lastPickup && (
