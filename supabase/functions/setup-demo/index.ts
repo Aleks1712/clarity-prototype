@@ -39,6 +39,21 @@ Deno.serve(async (req) => {
 
     console.log(`Setting up demo data for user: ${user.id}`)
 
+    // Add employee role to the user so they can test attendance management
+    const { error: employeeRoleError } = await supabaseAdmin
+      .from('user_roles')
+      .insert({
+        user_id: user.id,
+        role: 'employee'
+      })
+    
+    if (employeeRoleError && employeeRoleError.code !== '23505') {
+      console.error('Error adding employee role:', employeeRoleError)
+      throw employeeRoleError
+    }
+    
+    console.log('Added employee role to user')
+
     // Insert demo children using service role
     const { data: children, error: childrenError } = await supabaseAdmin
       .from('children')
