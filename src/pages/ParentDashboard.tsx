@@ -43,6 +43,7 @@ export default function ParentDashboard() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [estimatedMinutes, setEstimatedMinutes] = useState<number>(15);
   const [requiresApproval, setRequiresApproval] = useState(false);
+  const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
 
   const { requestNotificationPermission } = usePickupNotifications();
 
@@ -173,6 +174,7 @@ export default function ParentDashboard() {
   const handleRequestPickup = async () => {
     if (!selectedChild || !selectedPickup || !user) return;
 
+    setCurrentStep(2);
     setIsSubmitting(true);
 
     const pickupPerson = authorizedPickups.find(p => p.id === selectedPickup);
@@ -198,7 +200,9 @@ export default function ParentDashboard() {
 
     if (error) {
       toast.error('Kunne ikke sende forespørsel');
+      setCurrentStep(1);
     } else {
+      setCurrentStep(3);
       if (requiresApproval) {
         toast.success('Henteforespørsel sendt til godkjenning!', {
           description: `Venter på bekreftelse fra personalet`,
@@ -209,6 +213,8 @@ export default function ParentDashboard() {
         });
       }
       setSelectedPickup('');
+      // Reset to step 1 after 3 seconds
+      setTimeout(() => setCurrentStep(1), 3000);
     }
 
     setIsSubmitting(false);
@@ -354,6 +360,67 @@ export default function ParentDashboard() {
             ))}
           </div>
         )}
+
+        {/* Progress Steps */}
+        <Card className="border-2 border-primary/20 bg-gradient-to-r from-card to-primary/5">
+          <CardContent className="pt-6 pb-6">
+            <div className="flex items-center justify-between relative">
+              {/* Progress Line */}
+              <div className="absolute top-6 left-0 right-0 h-1 bg-muted -z-10">
+                <div 
+                  className="h-full bg-gradient-to-r from-success to-success/80 transition-all duration-500"
+                  style={{ width: `${((currentStep - 1) / 2) * 100}%` }}
+                />
+              </div>
+              
+              {/* Step 1: Velg */}
+              <div className="flex flex-col items-center flex-1">
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
+                  currentStep >= 1 
+                    ? 'bg-gradient-to-br from-success to-success/80 text-white shadow-glow-success scale-110' 
+                    : 'bg-muted text-muted-foreground'
+                }`}>
+                  <Users className="w-6 h-6" />
+                </div>
+                <p className={`text-sm font-bold mt-2 ${currentStep >= 1 ? 'text-success' : 'text-muted-foreground'}`}>
+                  1. Velg
+                </p>
+              </div>
+
+              {/* Step 2: Send */}
+              <div className="flex flex-col items-center flex-1">
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
+                  currentStep >= 2 
+                    ? 'bg-gradient-to-br from-success to-success/80 text-white shadow-glow-success scale-110' 
+                    : 'bg-muted text-muted-foreground'
+                }`}>
+                  {currentStep === 2 && isSubmitting ? (
+                    <Clock className="w-6 h-6 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="w-6 h-6" />
+                  )}
+                </div>
+                <p className={`text-sm font-bold mt-2 ${currentStep >= 2 ? 'text-success' : 'text-muted-foreground'}`}>
+                  2. Send
+                </p>
+              </div>
+
+              {/* Step 3: Hent */}
+              <div className="flex flex-col items-center flex-1">
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
+                  currentStep >= 3 
+                    ? 'bg-gradient-to-br from-success to-success/80 text-white shadow-glow-success scale-110' 
+                    : 'bg-muted text-muted-foreground'
+                }`}>
+                  <Baby className="w-6 h-6" />
+                </div>
+                <p className={`text-sm font-bold mt-2 ${currentStep >= 3 ? 'text-success' : 'text-muted-foreground'}`}>
+                  3. Hent
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Pickup Request Card - POLISHED DESIGN */}
         <Card className="border-2 shadow-lg hover:shadow-xl transition-shadow">
@@ -567,31 +634,6 @@ export default function ParentDashboard() {
           </Card>
         )}
 
-        {/* Info Card - SIMPLE 3-STEP */}
-        <Card className="bg-success/5 border-success/20">
-          <CardContent className="pt-6">
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div>
-                <div className="w-12 h-12 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-2">
-                  <span className="text-2xl font-bold text-success">1</span>
-                </div>
-                <p className="text-sm font-medium">Velg</p>
-              </div>
-              <div>
-                <div className="w-12 h-12 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-2">
-                  <span className="text-2xl font-bold text-success">2</span>
-                </div>
-                <p className="text-sm font-medium">Send</p>
-              </div>
-              <div>
-                <div className="w-12 h-12 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-2">
-                  <span className="text-2xl font-bold text-success">3</span>
-                </div>
-                <p className="text-sm font-medium">Hent</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Chat Dialog */}
