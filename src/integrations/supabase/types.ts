@@ -52,6 +52,44 @@ export type Database = {
           },
         ]
       }
+      chat_messages: {
+        Row: {
+          child_id: string | null
+          conversation_id: string
+          created_at: string
+          id: string
+          message: string
+          sender_id: string
+          sender_role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          child_id?: string | null
+          conversation_id: string
+          created_at?: string
+          id?: string
+          message: string
+          sender_id: string
+          sender_role: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          child_id?: string | null
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          message?: string
+          sender_id?: string
+          sender_role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       children: {
         Row: {
           birth_date: string | null
@@ -119,6 +157,7 @@ export type Database = {
           approved_at: string | null
           approved_by: string | null
           child_id: string
+          estimated_arrival_time: string | null
           id: string
           notes: string | null
           parent_id: string
@@ -131,6 +170,7 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           child_id: string
+          estimated_arrival_time?: string | null
           id?: string
           notes?: string | null
           parent_id: string
@@ -143,6 +183,7 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           child_id?: string
+          estimated_arrival_time?: string | null
           id?: string
           notes?: string | null
           parent_id?: string
@@ -215,6 +256,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      delete_old_chat_messages: { Args: never; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
