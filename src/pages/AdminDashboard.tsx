@@ -608,9 +608,11 @@ export default function AdminDashboard() {
                           type="password"
                           value={newUserForm.password}
                           onChange={(e) => setNewUserForm({ ...newUserForm, password: e.target.value })}
-                          placeholder="Minst 6 tegn"
+                          placeholder="Min. 8 tegn, 1 stor bokstav, 1 tall"
                           required
-                          minLength={6}
+                          minLength={8}
+                          pattern="^(?=.*[A-Z])(?=.*\d).{8,}$"
+                          title="Passordet må inneholde minst 8 tegn, 1 stor bokstav og 1 tall"
                         />
                       </div>
                     </div>
