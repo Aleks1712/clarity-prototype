@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Baby, Users, Shield, LogOut, Plus, Briefcase, Trash2, X, Pencil, ClipboardList } from 'lucide-react';
+import { Baby, Users, Shield, LogOut, Plus, Briefcase, Trash2, X, Pencil, ClipboardList, UserPlus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -36,6 +36,7 @@ export default function AdminDashboard() {
   const [childToDelete, setChildToDelete] = useState<{ id: string; name: string } | null>(null);
   const [childToEdit, setChildToEdit] = useState<any | null>(null);
   const [childEditForm, setChildEditForm] = useState({ name: '', birth_date: '', notes: '' });
+  const [newUserForm, setNewUserForm] = useState({ email: '', password: '', full_name: '', role: 'employee' });
 
   useEffect(() => {
     fetchData();
@@ -395,6 +396,44 @@ export default function AdminDashboard() {
     setIsLoading(false);
   };
 
+  const handleCreateUser = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error('Ikke innlogget');
+      }
+
+      const response = await supabase.functions.invoke('create-user', {
+        body: {
+          email: newUserForm.email,
+          password: newUserForm.password,
+          full_name: newUserForm.full_name,
+          role: newUserForm.role,
+        }
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || 'Kunne ikke opprette bruker');
+      }
+
+      if (response.data?.error) {
+        throw new Error(response.data.error);
+      }
+
+      toast.success(`Bruker ${newUserForm.full_name} opprettet!`);
+      setNewUserForm({ email: '', password: '', full_name: '', role: 'employee' });
+      fetchData();
+    } catch (error: any) {
+      toast.error('Kunne ikke opprette bruker: ' + error.message);
+    }
+
+    setIsLoading(false);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5">
       {/* Header */}
@@ -501,6 +540,78 @@ export default function AdminDashboard() {
                     </div>
                   ))}
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Add New User Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <UserPlus className="w-5 h-5" />
+                  Opprett ny bruker
+                </CardTitle>
+                <CardDescription>
+                  Legg til nye ansatte eller brukere i systemet
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleCreateUser} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="newUserName">Fullt navn</Label>
+                      <Input
+                        id="newUserName"
+                        value={newUserForm.full_name}
+                        onChange={(e) => setNewUserForm({ ...newUserForm, full_name: e.target.value })}
+                        placeholder="Ola Nordmann"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="newUserEmail">E-post</Label>
+                      <Input
+                        id="newUserEmail"
+                        type="email"
+                        value={newUserForm.email}
+                        onChange={(e) => setNewUserForm({ ...newUserForm, email: e.target.value })}
+                        placeholder="ola@example.com"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="newUserPassword">Passord</Label>
+                      <Input
+                        id="newUserPassword"
+                        type="password"
+                        value={newUserForm.password}
+                        onChange={(e) => setNewUserForm({ ...newUserForm, password: e.target.value })}
+                        placeholder="Minst 6 tegn"
+                        required
+                        minLength={6}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="newUserRole">Rolle</Label>
+                      <Select
+                        value={newUserForm.role}
+                        onValueChange={(value) => setNewUserForm({ ...newUserForm, role: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Velg rolle" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="parent">Forelder</SelectItem>
+                          <SelectItem value="employee">Ansatt</SelectItem>
+                          <SelectItem value="admin">Admin</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <Button type="submit" disabled={isLoading}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Opprett bruker
+                  </Button>
+                </form>
               </CardContent>
             </Card>
           </TabsContent>
