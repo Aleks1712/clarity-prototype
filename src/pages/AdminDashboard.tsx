@@ -6,9 +6,19 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Baby, Users, Shield, LogOut, Plus, Briefcase } from 'lucide-react';
+import { Baby, Users, Shield, LogOut, Plus, Briefcase, Trash2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 export default function AdminDashboard() {
   const { signOut } = useAuth();
@@ -16,6 +26,7 @@ export default function AdminDashboard() {
   const [employees, setEmployees] = useState<any[]>([]);
   const [children, setChildren] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -208,6 +219,36 @@ export default function AdminDashboard() {
     setIsLoading(false);
   };
 
+  const handleDeleteUser = async () => {
+    if (!userToDelete) return;
+    
+    setIsLoading(true);
+
+    try {
+      // Delete user roles first
+      await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', userToDelete.id);
+
+      // Delete profile (this will cascade to related data)
+      const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', userToDelete.id);
+
+      if (error) throw error;
+
+      toast.success(`${userToDelete.name} er fjernet fra systemet`);
+      fetchData();
+    } catch (error: any) {
+      toast.error('Kunne ikke fjerne bruker: ' + error.message);
+    }
+
+    setUserToDelete(null);
+    setIsLoading(false);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5">
       {/* Header */}
@@ -266,19 +307,30 @@ export default function AdminDashboard() {
                           Roller: {user.roles?.map((r: any) => r.role).join(', ') || 'Ingen'}
                         </p>
                       </div>
-                      <Select
-                        onValueChange={(role) => handleAssignRole(user.id, role)}
-                        disabled={isLoading}
-                      >
-                        <SelectTrigger className="w-40">
-                          <SelectValue placeholder="Tildel rolle" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="parent">Forelder</SelectItem>
-                          <SelectItem value="employee">Ansatt</SelectItem>
-                          <SelectItem value="admin">Admin</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <div className="flex items-center gap-2">
+                        <Select
+                          onValueChange={(role) => handleAssignRole(user.id, role)}
+                          disabled={isLoading}
+                        >
+                          <SelectTrigger className="w-40">
+                            <SelectValue placeholder="Tildel rolle" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="parent">Forelder</SelectItem>
+                            <SelectItem value="employee">Ansatt</SelectItem>
+                            <SelectItem value="admin">Admin</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => setUserToDelete({ id: user.id, name: user.full_name })}
+                          disabled={isLoading}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -424,6 +476,28 @@ export default function AdminDashboard() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Delete User Confirmation Dialog */}
+      <AlertDialog open={!!userToDelete} onOpenChange={() => setUserToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Er du sikker på at du vil fjerne denne brukeren?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Du er i ferd med å fjerne <strong>{userToDelete?.name}</strong> fra systemet. 
+              Dette vil også fjerne alle roller og tilknytninger. Denne handlingen kan ikke angres.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Avbryt</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteUser}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Ja, fjern bruker
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
