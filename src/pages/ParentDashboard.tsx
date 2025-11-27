@@ -16,6 +16,7 @@ import { Label } from '@/components/ui/label';
 import { usePickupNotifications } from '@/hooks/usePickupNotifications';
 import { ChatDialog } from '@/components/ChatDialog';
 import { AuthorizedPickupsManager } from '@/components/AuthorizedPickupsManager';
+import { TodaysAttendance } from '@/components/TodaysAttendance';
 
 interface Child {
   id: string;
@@ -617,6 +618,11 @@ export default function ParentDashboard() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Today's Attendance */}
+        {currentChild && (
+          <TodaysAttendance childId={currentChild.id} />
+        )}
 
         {/* Chat Button */}
         <Button
