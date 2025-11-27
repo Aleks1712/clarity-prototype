@@ -7,7 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Baby, Users, Clock, CheckCircle2, LogOut, Bell, BellOff, MessageCircle, Shield } from 'lucide-react';
+import { Baby, Users, Clock, CheckCircle2, LogOut, Bell, BellOff, MessageCircle, Shield, Settings } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { usePickupNotifications } from '@/hooks/usePickupNotifications';
 import { ChatDialog } from '@/components/ChatDialog';
 import { AuthorizedPickupsManager } from '@/components/AuthorizedPickupsManager';
@@ -37,6 +39,7 @@ export default function ParentDashboard() {
   );
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [estimatedMinutes, setEstimatedMinutes] = useState<number>(15);
+  const [requiresApproval, setRequiresApproval] = useState(false);
 
   const { requestNotificationPermission } = usePickupNotifications();
 
@@ -48,8 +51,43 @@ export default function ParentDashboard() {
   useEffect(() => {
     if (user) {
       fetchChildren();
+      fetchUserProfile();
     }
   }, [user]);
+
+  const fetchUserProfile = async () => {
+    if (!user) return;
+
+    const { data } = await supabase
+      .from('profiles')
+      .select('requires_approval')
+      .eq('id', user.id)
+      .single();
+
+    if (data) {
+      setRequiresApproval(data.requires_approval);
+    }
+  };
+
+  const handleToggleApproval = async (checked: boolean) => {
+    if (!user) return;
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ requires_approval: checked })
+      .eq('id', user.id);
+
+    if (error) {
+      toast.error('Kunne ikke oppdatere innstilling');
+    } else {
+      setRequiresApproval(checked);
+      toast.success(
+        checked 
+          ? 'Henting krever nå godkjenning fra personalet' 
+          : 'Henting godkjennes automatisk'
+      );
+    }
+  };
 
   useEffect(() => {
     if (selectedChild) {
@@ -138,6 +176,10 @@ export default function ParentDashboard() {
     const estimatedArrival = new Date();
     estimatedArrival.setMinutes(estimatedArrival.getMinutes() + estimatedMinutes);
 
+    // Check if approval is required or auto-approve
+    const status = requiresApproval ? 'pending' : 'approved';
+    const now = new Date().toISOString();
+
     const { error } = await supabase
       .from('pickup_logs')
       .insert({
@@ -145,16 +187,24 @@ export default function ParentDashboard() {
         parent_id: user.id,
         pickup_person_name: pickupPerson?.name || '',
         pickup_person_id: selectedPickup === 'parent' ? null : selectedPickup,
-        status: 'pending',
+        status: status,
         estimated_arrival_time: estimatedArrival.toISOString(),
+        approved_at: requiresApproval ? null : now,
+        approved_by: requiresApproval ? null : user.id,
       });
 
     if (error) {
       toast.error('Kunne ikke sende forespørsel');
     } else {
-      toast.success('Henteforespørsel sendt!', {
-        description: `Anslått ankomst: ${estimatedMinutes} min`,
-      });
+      if (requiresApproval) {
+        toast.success('Henteforespørsel sendt til godkjenning!', {
+          description: `Venter på bekreftelse fra personalet`,
+        });
+      } else {
+        toast.success('Henting bekreftet!', {
+          description: `Anslått ankomst: ${estimatedMinutes} min`,
+        });
+      }
       setSelectedPickup('');
     }
 
@@ -417,8 +467,60 @@ export default function ParentDashboard() {
             </Button>
 
             <p className="text-sm text-center text-muted-foreground">
-              Personalet bekrefter når barnet er hentet
+              {requiresApproval 
+                ? 'Personalet må godkjenne før henting' 
+                : 'Henting godkjennes automatisk'}
             </p>
+          </CardContent>
+        </Card>
+
+        {/* Approval Settings Card */}
+        <Card className="border-2 border-primary/10">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Settings className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">Godkjenning av henting</CardTitle>
+                <CardDescription>
+                  Velg hvordan dine hentemeldinger skal håndteres
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between p-4 rounded-xl bg-muted/50">
+              <div className="space-y-1 flex-1">
+                <Label htmlFor="requires-approval" className="text-base font-semibold cursor-pointer">
+                  Krever godkjenning fra personalet
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  {requiresApproval 
+                    ? 'Personalet må godkjenne hver hentemelding før du kan hente' 
+                    : 'Hentemeldinger godkjennes automatisk - raskere og mer fleksibelt'}
+                </p>
+              </div>
+              <Switch
+                id="requires-approval"
+                checked={requiresApproval}
+                onCheckedChange={handleToggleApproval}
+                className="ml-4"
+              />
+            </div>
+
+            <div className="p-4 rounded-xl bg-primary/5 border border-primary/10">
+              <div className="flex gap-3">
+                <Shield className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                <div className="space-y-1 text-sm">
+                  <p className="font-semibold text-primary">Sikkerhet</p>
+                  <p className="text-muted-foreground">
+                    Personalet verifiserer alltid identitet fysisk ved henting - 
+                    uavhengig av denne innstillingen.
+                  </p>
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
 

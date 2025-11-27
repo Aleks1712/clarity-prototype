@@ -234,18 +234,21 @@ export type Database = {
           full_name: string
           id: string
           phone: string | null
+          requires_approval: boolean
         }
         Insert: {
           created_at?: string | null
           full_name: string
           id: string
           phone?: string | null
+          requires_approval?: boolean
         }
         Update: {
           created_at?: string | null
           full_name?: string
           id?: string
           phone?: string | null
+          requires_approval?: boolean
         }
         Relationships: []
       }

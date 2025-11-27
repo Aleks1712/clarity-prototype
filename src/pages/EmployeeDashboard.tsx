@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Baby, Clock, CheckCircle2, XCircle, LogOut, Bell, BellOff, MessageCircle } from 'lucide-react';
+import { Baby, Clock, CheckCircle2, XCircle, LogOut, Bell, BellOff, MessageCircle, Zap } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePickupNotifications } from '@/hooks/usePickupNotifications';
 import { ChatDialog } from '@/components/ChatDialog';
@@ -20,12 +20,15 @@ interface PickupRequest {
   estimated_arrival_time: string | null;
   completed_at: string | null;
   approved_at: string | null;
+  approved_by: string | null;
+  parent_id: string;
   child: {
     name: string;
     photo_url: string | null;
   };
   parent: {
     full_name: string;
+    requires_approval?: boolean;
   };
 }
 
@@ -79,7 +82,7 @@ export default function EmployeeDashboard() {
       .select(`
         *,
         child:children (name, photo_url),
-        parent:profiles!pickup_logs_parent_id_fkey (full_name)
+        parent:profiles!pickup_logs_parent_id_fkey (full_name, requires_approval)
       `)
       .eq('status', 'pending')
       .order('requested_at', { ascending: false });
@@ -89,7 +92,7 @@ export default function EmployeeDashboard() {
       .select(`
         *,
         child:children (name, photo_url),
-        parent:profiles!pickup_logs_parent_id_fkey (full_name)
+        parent:profiles!pickup_logs_parent_id_fkey (full_name, requires_approval)
       `)
       .eq('status', 'approved')
       .order('approved_at', { ascending: false })
@@ -100,7 +103,7 @@ export default function EmployeeDashboard() {
       .select(`
         *,
         child:children (name, photo_url),
-        parent:profiles!pickup_logs_parent_id_fkey (full_name)
+        parent:profiles!pickup_logs_parent_id_fkey (full_name, requires_approval)
       `)
       .eq('status', 'completed')
       .order('completed_at', { ascending: false })
@@ -394,10 +397,17 @@ export default function EmployeeDashboard() {
                         </div>
                       </div>
                       <div className="flex flex-col gap-2 items-end">
-                        <Badge className="bg-success text-white">
-                          <CheckCircle2 className="w-3 h-3 mr-1" />
-                          Godkjent
-                        </Badge>
+                        {pickup.approved_by === pickup.parent_id ? (
+                          <Badge className="bg-primary/10 text-primary border border-primary/20">
+                            <Zap className="w-3 h-3 mr-1" />
+                            Auto-godkjent
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-success text-white">
+                            <CheckCircle2 className="w-3 h-3 mr-1" />
+                            Godkjent
+                          </Badge>
+                        )}
                         <Button
                           onClick={() => handleMarkAsCompleted(pickup.id)}
                           disabled={isLoading}
