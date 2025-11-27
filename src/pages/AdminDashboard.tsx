@@ -549,10 +549,10 @@ export default function AdminDashboard() {
             {!showAddUserForm ? (
               <Button 
                 onClick={() => setShowAddUserForm(true)} 
-                className="w-full"
+                className="w-full border-2 border-dashed border-primary/50 hover:border-primary hover:bg-primary/5 py-6"
                 variant="outline"
               >
-                <UserPlus className="w-4 h-4 mr-2" />
+                <UserPlus className="w-5 h-5 mr-2" />
                 Legg til ny ansatt
               </Button>
             ) : (
