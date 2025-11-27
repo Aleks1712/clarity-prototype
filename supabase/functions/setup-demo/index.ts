@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
 
       console.log(`Linked child ${children[0].id} to user ${user.id}`)
 
-      // Add authorized pickups for the child
+      // Add authorized pickups for the child WITH CONSENT
       const { error: pickupsError } = await supabaseAdmin
         .from('authorized_pickups')
         .insert([
@@ -83,12 +83,18 @@ Deno.serve(async (req) => {
             name: 'Mormor Anne',
             relationship: 'Besteforelder',
             phone: '987 65 432',
+            consent_given: true,
+            consent_date: new Date().toISOString(),
+            added_by: user.id
           },
           {
             child_id: children[0].id,
             name: 'Tante Lisa',
             relationship: 'Tante',
             phone: '456 78 901',
+            consent_given: true,
+            consent_date: new Date().toISOString(),
+            added_by: user.id
           },
         ])
 
