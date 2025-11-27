@@ -6,7 +6,8 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Baby, Users, Shield, LogOut, Plus, Briefcase, Trash2 } from 'lucide-react';
+import { Baby, Users, Shield, LogOut, Plus, Briefcase, Trash2, X } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
@@ -27,6 +28,7 @@ export default function AdminDashboard() {
   const [children, setChildren] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [userToDelete, setUserToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [roleToRemove, setRoleToRemove] = useState<{ userId: string; userName: string; role: string } | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -219,6 +221,28 @@ export default function AdminDashboard() {
     setIsLoading(false);
   };
 
+  const handleRemoveRole = async () => {
+    if (!roleToRemove) return;
+    
+    setIsLoading(true);
+
+    const { error } = await supabase
+      .from('user_roles')
+      .delete()
+      .eq('user_id', roleToRemove.userId)
+      .eq('role', roleToRemove.role as 'parent' | 'employee' | 'admin');
+
+    if (error) {
+      toast.error('Kunne ikke fjerne rolle: ' + error.message);
+    } else {
+      toast.success(`Rollen "${roleToRemove.role}" er fjernet fra ${roleToRemove.userName}`);
+      fetchData();
+    }
+
+    setRoleToRemove(null);
+    setIsLoading(false);
+  };
+
   const handleDeleteUser = async () => {
     if (!userToDelete) return;
     
@@ -307,9 +331,24 @@ export default function AdminDashboard() {
                     >
                       <div>
                         <h4 className="font-semibold">{user.full_name}</h4>
-                        <p className="text-sm text-muted-foreground">
-                          Roller: {user.roles?.map((r: any) => r.role).join(', ') || 'Ingen'}
-                        </p>
+                        <div className="flex items-center gap-1 mt-1">
+                          <span className="text-sm text-muted-foreground">Roller:</span>
+                          {user.roles?.length > 0 ? (
+                            user.roles.map((r: any) => (
+                              <Badge
+                                key={r.role}
+                                variant="secondary"
+                                className="cursor-pointer hover:bg-destructive/20 group"
+                                onClick={() => setRoleToRemove({ userId: user.id, userName: user.full_name, role: r.role })}
+                              >
+                                {r.role}
+                                <X className="w-3 h-3 ml-1 opacity-50 group-hover:opacity-100" />
+                              </Badge>
+                            ))
+                          ) : (
+                            <span className="text-sm text-muted-foreground">Ingen</span>
+                          )}
+                        </div>
                       </div>
                       <div className="flex items-center gap-2">
                         <Select
@@ -498,6 +537,27 @@ export default function AdminDashboard() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Ja, fjern bruker
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Remove Role Confirmation Dialog */}
+      <AlertDialog open={!!roleToRemove} onOpenChange={() => setRoleToRemove(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Fjern rolle?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Er du sikker på at du vil fjerne rollen <strong>"{roleToRemove?.role}"</strong> fra <strong>{roleToRemove?.userName}</strong>?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Avbryt</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleRemoveRole}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Fjern rolle
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
