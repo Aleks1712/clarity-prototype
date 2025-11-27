@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Baby, Users, Shield, LogOut, Plus, Briefcase, Trash2, X, Pencil } from 'lucide-react';
+import { Baby, Users, Shield, LogOut, Plus, Briefcase, Trash2, X, Pencil, ClipboardList } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -22,6 +23,7 @@ import {
 } from '@/components/ui/alert-dialog';
 
 export default function AdminDashboard() {
+  const navigate = useNavigate();
   const { signOut } = useAuth();
   const [users, setUsers] = useState<any[]>([]);
   const [employees, setEmployees] = useState<any[]>([]);
@@ -407,9 +409,15 @@ export default function AdminDashboard() {
               <p className="text-sm text-muted-foreground">Administrator</p>
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={signOut}>
-            <LogOut className="w-5 h-5" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => navigate('/employee')}>
+              <ClipboardList className="w-4 h-4 mr-2" />
+              Ansatt-dashbord
+            </Button>
+            <Button variant="ghost" size="icon" onClick={signOut}>
+              <LogOut className="w-5 h-5" />
+            </Button>
+          </div>
         </div>
       </div>
 
