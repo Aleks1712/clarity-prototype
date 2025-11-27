@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 import Auth from "./pages/Auth";
 import Onboarding from "./pages/Onboarding";
 import ParentDashboard from "./pages/ParentDashboard";
@@ -64,47 +65,49 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Routes>
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/demo-setup" element={
-              <ProtectedRoute>
-                <DemoSetup />
-              </ProtectedRoute>
-            } />
-            <Route
-              path="/"
-              element={
+          <LanguageProvider>
+            <Routes>
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/demo-setup" element={
                 <ProtectedRoute>
-                  <DashboardRouter />
+                  <DemoSetup />
                 </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/parent"
-              element={
-                <ProtectedRoute allowedRoles={['parent']}>
-                  <ParentDashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/employee"
-              element={
-                <ProtectedRoute allowedRoles={['employee']}>
-                  <EmployeeDashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin"
-              element={
-                <ProtectedRoute allowedRoles={['admin']}>
-                  <AdminDashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+              } />
+              <Route
+                path="/"
+                element={
+                  <ProtectedRoute>
+                    <DashboardRouter />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/parent"
+                element={
+                  <ProtectedRoute allowedRoles={['parent']}>
+                    <ParentDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/employee"
+                element={
+                  <ProtectedRoute allowedRoles={['employee']}>
+                    <EmployeeDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </LanguageProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
