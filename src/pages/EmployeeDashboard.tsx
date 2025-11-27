@@ -6,9 +6,10 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Baby, Clock, CheckCircle2, XCircle, LogOut, Bell, BellOff } from 'lucide-react';
+import { Baby, Clock, CheckCircle2, XCircle, LogOut, Bell, BellOff, MessageCircle } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePickupNotifications } from '@/hooks/usePickupNotifications';
+import { ChatDialog } from '@/components/ChatDialog';
 
 interface PickupRequest {
   id: string;
@@ -16,6 +17,7 @@ interface PickupRequest {
   pickup_person_name: string;
   status: string;
   requested_at: string;
+  estimated_arrival_time: string | null;
   child: {
     name: string;
     photo_url: string | null;
@@ -34,6 +36,8 @@ export default function EmployeeDashboard() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(
     typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted'
   );
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [selectedChild, setSelectedChild] = useState<{ id: string; name: string; photo_url: string | null } | null>(null);
   
   const { requestNotificationPermission } = usePickupNotifications();
 
@@ -259,6 +263,11 @@ export default function EmployeeDashboard() {
                           <p className="text-sm text-muted-foreground">
                             Meldt: {new Date(pickup.requested_at).toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' })}
                           </p>
+                          {pickup.estimated_arrival_time && (
+                            <p className="text-sm text-primary font-medium">
+                              Anslått ankomst: {new Date(pickup.estimated_arrival_time).toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                          )}
                         </div>
                       </div>
                       <Badge className="bg-gradient-to-r from-warning to-warning/90 text-warning-foreground px-4 py-2 text-base shadow-lg">
@@ -276,6 +285,21 @@ export default function EmployeeDashboard() {
                       >
                         <CheckCircle2 className="w-6 h-6 mr-2" />
                         Godkjenn
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          setSelectedChild({
+                            id: pickup.child_id,
+                            name: pickup.child.name,
+                            photo_url: pickup.child.photo_url,
+                          });
+                          setIsChatOpen(true);
+                        }}
+                        variant="outline"
+                        className="h-16 px-6 border-2 hover:scale-[1.02] transition-all"
+                        size="lg"
+                      >
+                        <MessageCircle className="w-6 h-6" />
                       </Button>
                       <Button
                         onClick={() => handleReject(pickup.id)}
@@ -335,6 +359,17 @@ export default function EmployeeDashboard() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Chat Dialog */}
+      {selectedChild && (
+        <ChatDialog
+          open={isChatOpen}
+          onOpenChange={setIsChatOpen}
+          childId={selectedChild.id}
+          childName={selectedChild.name}
+          childPhoto={selectedChild.photo_url}
+        />
+      )}
     </div>
   );
 }
