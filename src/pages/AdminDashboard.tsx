@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Baby, Users, Shield, LogOut, Plus, Briefcase, Trash2, X } from 'lucide-react';
+import { Baby, Users, Shield, LogOut, Plus, Briefcase, Trash2, X, Pencil } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -29,6 +29,8 @@ export default function AdminDashboard() {
   const [isLoading, setIsLoading] = useState(false);
   const [userToDelete, setUserToDelete] = useState<{ id: string; name: string } | null>(null);
   const [roleToRemove, setRoleToRemove] = useState<{ userId: string; userName: string; role: string } | null>(null);
+  const [employeeToEdit, setEmployeeToEdit] = useState<any | null>(null);
+  const [editForm, setEditForm] = useState({ full_name: '', phone: '' });
 
   useEffect(() => {
     fetchData();
@@ -243,6 +245,38 @@ export default function AdminDashboard() {
     setIsLoading(false);
   };
 
+  const handleEditEmployee = (employee: any) => {
+    setEmployeeToEdit(employee);
+    setEditForm({
+      full_name: employee.full_name || '',
+      phone: employee.phone || '',
+    });
+  };
+
+  const handleUpdateEmployee = async () => {
+    if (!employeeToEdit) return;
+    
+    setIsLoading(true);
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        full_name: editForm.full_name,
+        phone: editForm.phone,
+      })
+      .eq('id', employeeToEdit.id);
+
+    if (error) {
+      toast.error('Kunne ikke oppdatere ansatt: ' + error.message);
+    } else {
+      toast.success('Ansattinformasjon oppdatert!');
+      fetchData();
+    }
+
+    setEmployeeToEdit(null);
+    setIsLoading(false);
+  };
+
   const handleDeleteUser = async () => {
     if (!userToDelete) return;
     
@@ -419,8 +453,17 @@ export default function AdminDashboard() {
                             </p>
                           </div>
                         </div>
-                        <div className="text-sm text-muted-foreground">
-                          Roller: {employee.roles?.map((r: any) => r.role).join(', ')}
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-muted-foreground">
+                            Roller: {employee.roles?.map((r: any) => r.role).join(', ')}
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEditEmployee(employee)}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
                         </div>
                       </div>
                     ))}
@@ -558,6 +601,43 @@ export default function AdminDashboard() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Fjern rolle
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Edit Employee Dialog */}
+      <AlertDialog open={!!employeeToEdit} onOpenChange={() => setEmployeeToEdit(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Rediger ansatt</AlertDialogTitle>
+            <AlertDialogDescription>
+              Oppdater informasjon for {employeeToEdit?.full_name}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-name">Navn</Label>
+              <Input
+                id="edit-name"
+                value={editForm.full_name}
+                onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-phone">Telefon</Label>
+              <Input
+                id="edit-phone"
+                value={editForm.phone}
+                onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                placeholder="F.eks. 912 34 567"
+              />
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Avbryt</AlertDialogCancel>
+            <AlertDialogAction onClick={handleUpdateEmployee} disabled={isLoading}>
+              Lagre endringer
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
