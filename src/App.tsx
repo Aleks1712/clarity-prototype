@@ -12,6 +12,7 @@ import EmployeeDashboard from "./pages/EmployeeDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import DemoSetup from "./pages/DemoSetup";
 import NotFound from "./pages/NotFound";
+import RoleSelector from "./pages/RoleSelector";
 
 const queryClient = new QueryClient();
 
@@ -40,7 +41,7 @@ function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode;
 
 // Dashboard Router Component
 function DashboardRouter() {
-  const { userRole, loading } = useAuth();
+  const { userRole, userRoles, selectedRole, loading } = useAuth();
 
   if (loading) {
     return (
@@ -50,11 +51,22 @@ function DashboardRouter() {
     );
   }
 
+  // If user has no roles, show onboarding
+  if (userRoles.length === 0) {
+    return <Onboarding />;
+  }
+
+  // If user has multiple roles and hasn't selected one, show role selector
+  if (userRoles.length > 1 && !selectedRole) {
+    return <RoleSelector />;
+  }
+
+  // Route to appropriate dashboard based on role
   if (userRole === 'parent') return <ParentDashboard />;
   if (userRole === 'employee') return <EmployeeDashboard />;
   if (userRole === 'admin') return <AdminDashboard />;
 
-  // If no role, show onboarding
+  // Fallback to onboarding
   return <Onboarding />;
 }
 

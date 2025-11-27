@@ -24,7 +24,7 @@ import {
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
-  const { signOut } = useAuth();
+  const { signOut, clearSelectedRole } = useAuth();
   const [users, setUsers] = useState<any[]>([]);
   const [employees, setEmployees] = useState<any[]>([]);
   const [children, setChildren] = useState<any[]>([]);
@@ -451,9 +451,9 @@ export default function AdminDashboard() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => navigate('/employee')}>
+            <Button variant="outline" onClick={() => { clearSelectedRole(); navigate('/'); }}>
               <ClipboardList className="w-4 h-4 mr-2" />
-              Ansatt-dashbord
+              Bytt rolle
             </Button>
             <Button variant="ghost" size="icon" onClick={signOut}>
               <LogOut className="w-5 h-5" />

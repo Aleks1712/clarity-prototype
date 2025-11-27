@@ -3,14 +3,20 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 
+type AppRole = 'parent' | 'employee' | 'admin';
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
-  userRole: 'parent' | 'employee' | 'admin' | null;
+  userRole: AppRole | null;
+  userRoles: AppRole[];
+  selectedRole: AppRole | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
+  selectRole: (role: AppRole) => void;
+  clearSelectedRole: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -18,9 +24,21 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [userRole, setUserRole] = useState<'parent' | 'employee' | 'admin' | null>(null);
+  const [userRoles, setUserRoles] = useState<AppRole[]>([]);
+  const [selectedRole, setSelectedRole] = useState<AppRole | null>(() => {
+    // Restore selected role from sessionStorage
+    const stored = sessionStorage.getItem('selectedRole');
+    return stored as AppRole | null;
+  });
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
+  // Computed userRole based on selectedRole or priority
+  const userRole: AppRole | null = selectedRole || (
+    userRoles.includes('admin') ? 'admin' :
+    userRoles.includes('employee') ? 'employee' :
+    userRoles.includes('parent') ? 'parent' : null
+  );
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -32,10 +50,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Defer role fetching
         if (session?.user) {
           setTimeout(() => {
-            fetchUserRole(session.user.id);
+            fetchUserRoles(session.user.id);
           }, 0);
         } else {
-          setUserRole(null);
+          setUserRoles([]);
+          setSelectedRole(null);
+          sessionStorage.removeItem('selectedRole');
         }
       }
     );
@@ -46,7 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        fetchUserRole(session.user.id);
+        fetchUserRoles(session.user.id);
       }
       setLoading(false);
     });
@@ -54,7 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const fetchUserRole = async (userId: string) => {
+  const fetchUserRoles = async (userId: string) => {
     const { data, error } = await supabase
       .from('user_roles')
       .select('role')
@@ -63,18 +83,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     console.log('Fetched roles:', data, 'Error:', error);
     
     if (data && data.length > 0) {
-      // Prioritize roles: admin > employee > parent
-      const roles = data.map(r => r.role);
+      const roles = data.map(r => r.role as AppRole);
       console.log('User roles array:', roles);
-      if (roles.includes('admin')) {
-        console.log('Setting role to admin');
-        setUserRole('admin');
-      } else if (roles.includes('employee')) {
-        setUserRole('employee');
-      } else {
-        setUserRole('parent');
-      }
+      setUserRoles(roles);
+    } else {
+      setUserRoles([]);
     }
+  };
+
+  const selectRole = (role: AppRole) => {
+    setSelectedRole(role);
+    sessionStorage.setItem('selectedRole', role);
+  };
+
+  const clearSelectedRole = () => {
+    setSelectedRole(null);
+    sessionStorage.removeItem('selectedRole');
   };
 
   const signIn = async (email: string, password: string) => {
@@ -84,6 +108,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     
     if (!error) {
+      // Clear selected role on new login to show role selector
+      clearSelectedRole();
       navigate('/');
     }
     
@@ -113,12 +139,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     await supabase.auth.signOut();
-    setUserRole(null);
+    setUserRoles([]);
+    setSelectedRole(null);
+    sessionStorage.removeItem('selectedRole');
     navigate('/auth');
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, userRole, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      session, 
+      userRole, 
+      userRoles,
+      selectedRole,
+      loading, 
+      signIn, 
+      signUp, 
+      signOut,
+      selectRole,
+      clearSelectedRole
+    }}>
       {children}
     </AuthContext.Provider>
   );
