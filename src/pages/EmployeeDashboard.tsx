@@ -18,6 +18,8 @@ interface PickupRequest {
   status: string;
   requested_at: string;
   estimated_arrival_time: string | null;
+  completed_at: string | null;
+  approved_at: string | null;
   child: {
     name: string;
     photo_url: string | null;
@@ -31,6 +33,7 @@ export default function EmployeeDashboard() {
   const { signOut } = useAuth();
   const [pendingPickups, setPendingPickups] = useState<PickupRequest[]>([]);
   const [approvedPickups, setApprovedPickups] = useState<PickupRequest[]>([]);
+  const [completedPickups, setCompletedPickups] = useState<PickupRequest[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [totalChildren, setTotalChildren] = useState(0);
   const [notificationsEnabled, setNotificationsEnabled] = useState(
@@ -92,6 +95,17 @@ export default function EmployeeDashboard() {
       .order('approved_at', { ascending: false })
       .limit(10);
 
+    const { data: completed } = await supabase
+      .from('pickup_logs')
+      .select(`
+        *,
+        child:children (name, photo_url),
+        parent:profiles!pickup_logs_parent_id_fkey (full_name)
+      `)
+      .eq('status', 'completed')
+      .order('completed_at', { ascending: false })
+      .limit(20);
+
     // Fetch total children count
     const { count } = await supabase
       .from('children')
@@ -99,6 +113,7 @@ export default function EmployeeDashboard() {
 
     if (pending) setPendingPickups(pending as any);
     if (approved) setApprovedPickups(approved as any);
+    if (completed) setCompletedPickups(completed as any);
     if (count !== null) setTotalChildren(count);
   };
 
@@ -139,6 +154,26 @@ export default function EmployeeDashboard() {
       toast.error('Kunne ikke avvise henting');
     } else {
       toast.success('Henting avvist');
+    }
+
+    setIsLoading(false);
+  };
+
+  const handleMarkAsCompleted = async (pickupId: string) => {
+    setIsLoading(true);
+
+    const { error } = await supabase
+      .from('pickup_logs')
+      .update({
+        status: 'completed',
+        completed_at: new Date().toISOString(),
+      })
+      .eq('id', pickupId);
+
+    if (error) {
+      toast.error('Kunne ikke markere som hentet');
+    } else {
+      toast.success('Barnet er hentet!');
     }
 
     setIsLoading(false);
@@ -211,7 +246,7 @@ export default function EmployeeDashboard() {
         </div>
 
         <Tabs defaultValue="pending" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="pending" className="relative">
               Ventende
               {pendingPickups.length > 0 && (
@@ -221,6 +256,7 @@ export default function EmployeeDashboard() {
               )}
             </TabsTrigger>
             <TabsTrigger value="approved">Godkjente</TabsTrigger>
+            <TabsTrigger value="completed">Hentet</TabsTrigger>
           </TabsList>
 
           <TabsContent value="pending" className="space-y-4">
@@ -343,13 +379,85 @@ export default function EmployeeDashboard() {
                         <div>
                           <CardTitle className="text-lg mb-1">{pickup.child.name}</CardTitle>
                           <p className="text-sm text-muted-foreground">
-                            Hentet av: <span className="font-semibold text-foreground">{pickup.pickup_person_name}</span>
+                            Hentes av: <span className="font-semibold text-foreground">{pickup.pickup_person_name}</span>
                           </p>
+                          {pickup.approved_at && (
+                            <p className="text-xs text-muted-foreground">
+                              Godkjent: {new Date(pickup.approved_at).toLocaleString('nb-NO', { 
+                                day: '2-digit', 
+                                month: '2-digit', 
+                                hour: '2-digit', 
+                                minute: '2-digit' 
+                              })}
+                            </p>
+                          )}
                         </div>
                       </div>
-                      <Badge className="bg-success text-white">
+                      <div className="flex flex-col gap-2 items-end">
+                        <Badge className="bg-success text-white">
+                          <CheckCircle2 className="w-3 h-3 mr-1" />
+                          Godkjent
+                        </Badge>
+                        <Button
+                          onClick={() => handleMarkAsCompleted(pickup.id)}
+                          disabled={isLoading}
+                          size="sm"
+                          className="bg-gradient-to-r from-primary to-primary/90 hover:scale-105 transition-all"
+                        >
+                          <CheckCircle2 className="w-4 h-4 mr-1" />
+                          Merk som hentet
+                        </Button>
+                      </div>
+                    </div>
+                  </CardHeader>
+                </Card>
+              ))
+            )}
+          </TabsContent>
+
+          <TabsContent value="completed" className="space-y-4">
+            {completedPickups.length === 0 ? (
+              <Card>
+                <CardContent className="pt-6 text-center py-12">
+                  <div className="w-16 h-16 rounded-full bg-muted mx-auto mb-4 flex items-center justify-center">
+                    <CheckCircle2 className="w-8 h-8 text-muted-foreground" />
+                  </div>
+                  <h3 className="font-semibold mb-2">Ingen fullførte hentinger ennå</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Fullførte hentinger vil vises her
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              completedPickups.map((pickup) => (
+                <Card key={pickup.id} className="border-l-4 border-l-muted bg-muted/5">
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-4">
+                        <Avatar className="w-12 h-12">
+                          <AvatarImage src={pickup.child.photo_url || undefined} />
+                          <AvatarFallback>{pickup.child.name[0]}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <CardTitle className="text-lg mb-1">{pickup.child.name}</CardTitle>
+                          <p className="text-sm text-muted-foreground">
+                            Hentet av: <span className="font-semibold text-foreground">{pickup.pickup_person_name}</span>
+                          </p>
+                          {pickup.completed_at && (
+                            <p className="text-xs text-muted-foreground">
+                              Hentet: {new Date(pickup.completed_at).toLocaleString('nb-NO', { 
+                                day: '2-digit', 
+                                month: '2-digit', 
+                                hour: '2-digit', 
+                                minute: '2-digit' 
+                              })}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <Badge variant="secondary">
                         <CheckCircle2 className="w-3 h-3 mr-1" />
-                        Godkjent
+                        Hentet
                       </Badge>
                     </div>
                   </CardHeader>
