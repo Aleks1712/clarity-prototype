@@ -31,6 +31,9 @@ export default function AdminDashboard() {
   const [roleToRemove, setRoleToRemove] = useState<{ userId: string; userName: string; role: string } | null>(null);
   const [employeeToEdit, setEmployeeToEdit] = useState<any | null>(null);
   const [editForm, setEditForm] = useState({ full_name: '', phone: '' });
+  const [childToDelete, setChildToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [childToEdit, setChildToEdit] = useState<any | null>(null);
+  const [childEditForm, setChildEditForm] = useState({ name: '', birth_date: '', notes: '' });
 
   useEffect(() => {
     fetchData();
@@ -274,6 +277,85 @@ export default function AdminDashboard() {
     }
 
     setEmployeeToEdit(null);
+    setIsLoading(false);
+  };
+
+  const handleEditChild = (child: any) => {
+    setChildToEdit(child);
+    setChildEditForm({
+      name: child.name || '',
+      birth_date: child.birth_date || '',
+      notes: child.notes || '',
+    });
+  };
+
+  const handleUpdateChild = async () => {
+    if (!childToEdit) return;
+    
+    setIsLoading(true);
+
+    const { error } = await supabase
+      .from('children')
+      .update({
+        name: childEditForm.name,
+        birth_date: childEditForm.birth_date || null,
+        notes: childEditForm.notes || null,
+      })
+      .eq('id', childToEdit.id);
+
+    if (error) {
+      toast.error('Kunne ikke oppdatere barn: ' + error.message);
+    } else {
+      toast.success('Barnet er oppdatert!');
+      fetchData();
+    }
+
+    setChildToEdit(null);
+    setIsLoading(false);
+  };
+
+  const handleDeleteChild = async () => {
+    if (!childToDelete) return;
+    
+    setIsLoading(true);
+
+    try {
+      // First delete related records
+      await supabase
+        .from('authorized_pickups')
+        .delete()
+        .eq('child_id', childToDelete.id);
+
+      await supabase
+        .from('pickup_logs')
+        .delete()
+        .eq('child_id', childToDelete.id);
+
+      await supabase
+        .from('chat_messages')
+        .delete()
+        .eq('child_id', childToDelete.id);
+
+      await supabase
+        .from('parent_children')
+        .delete()
+        .eq('child_id', childToDelete.id);
+
+      // Then delete the child
+      const { error } = await supabase
+        .from('children')
+        .delete()
+        .eq('id', childToDelete.id);
+
+      if (error) throw error;
+
+      toast.success(`${childToDelete.name} er fjernet fra systemet`);
+      fetchData();
+    } catch (error: any) {
+      toast.error('Kunne ikke fjerne barn: ' + error.message);
+    }
+
+    setChildToDelete(null);
     setIsLoading(false);
   };
 
@@ -553,6 +635,28 @@ export default function AdminDashboard() {
                         <p className="text-sm text-muted-foreground">
                           Foreldre: {child.parents?.map((p: any) => p.parent?.full_name).join(', ') || 'Ingen tilknyttet'}
                         </p>
+                        {child.birth_date && (
+                          <p className="text-xs text-muted-foreground">
+                            Fødselsdato: {child.birth_date}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEditChild(child)}
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => setChildToDelete({ id: child.id, name: child.name })}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </div>
                     </div>
                   ))}
@@ -637,6 +741,74 @@ export default function AdminDashboard() {
           <AlertDialogFooter>
             <AlertDialogCancel>Avbryt</AlertDialogCancel>
             <AlertDialogAction onClick={handleUpdateEmployee} disabled={isLoading}>
+              Lagre endringer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Child Confirmation Dialog */}
+      <AlertDialog open={!!childToDelete} onOpenChange={() => setChildToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Er du sikker på at du vil fjerne dette barnet?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Du er i ferd med å fjerne <strong>{childToDelete?.name}</strong> fra systemet. 
+              Dette vil også fjerne alle tilknytninger og historikk. Denne handlingen kan ikke angres.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Avbryt</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteChild}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Ja, fjern barn
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Edit Child Dialog */}
+      <AlertDialog open={!!childToEdit} onOpenChange={() => setChildToEdit(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Rediger barn</AlertDialogTitle>
+            <AlertDialogDescription>
+              Oppdater informasjon for {childToEdit?.name}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-child-name">Navn</Label>
+              <Input
+                id="edit-child-name"
+                value={childEditForm.name}
+                onChange={(e) => setChildEditForm({ ...childEditForm, name: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-child-birthdate">Fødselsdato</Label>
+              <Input
+                id="edit-child-birthdate"
+                type="date"
+                value={childEditForm.birth_date}
+                onChange={(e) => setChildEditForm({ ...childEditForm, birth_date: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-child-notes">Notater</Label>
+              <Input
+                id="edit-child-notes"
+                value={childEditForm.notes}
+                onChange={(e) => setChildEditForm({ ...childEditForm, notes: e.target.value })}
+                placeholder="Evt. notater om barnet"
+              />
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Avbryt</AlertDialogCancel>
+            <AlertDialogAction onClick={handleUpdateChild} disabled={isLoading}>
               Lagre endringer
             </AlertDialogAction>
           </AlertDialogFooter>
